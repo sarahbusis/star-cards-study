@@ -1,70 +1,76 @@
 const STORAGE_KEY = "star_screenshot_progress_v2";
-const TEACHER_PIN = "2026"; // Teacher PIN: 2026
+const TEACHER_PIN = "2026"; // Teacher PIN is 2026
 
 let cards = [];
 let progress = loadProgress();
-// progress = { students: { [name]: { totals:{got,close,miss}, byCard:{[cardId]:{got,close,miss,attempts,timeMs}} } } }
 
 let currentStudent = "";
 let selectedUnits = new Set();
 let queue = [];
 let idx = 0;
 
-let cardStartTs = null; // timing per card
+let cardStartTs = null;
 
-const el = (id) => document.getElementById(id);
+// Safe element getter: warns instead of crashing
+function el(id) {
+  const node = document.getElementById(id);
+  if (!node) console.warn(`[STAR] Missing element id="${id}"`);
+  return node;
+}
 
-init();
+document.addEventListener("DOMContentLoaded", () => {
+  wireUI();
+  loadCards();
+  buildUnitCheckboxes();
+  showView("start");
+});
 
-async function init() {
-  // Nav buttons
-  el("modeStudent").addEventListener("click", () => showView("start"));
-  el("modeTeacher").addEventListener("click", () => {
+function wireUI() {
+  // These are extra (in addition to inline onclick). If they fail, onclick still works.
+  el("modeStudent")?.addEventListener("click", () => showView("start"));
+  el("modeTeacher")?.addEventListener("click", () => {
     const pin = prompt("Teacher PIN:");
     if (pin !== TEACHER_PIN) return alert("Incorrect PIN.");
     showView("teacher");
     renderTeacher();
   });
 
-  // Student controls
-  el("startBtn").addEventListener("click", start);
-  el("changeBtn").addEventListener("click", () => {
-    showView("start");
-    resetStudyUI();
-  });
+  el("changeBtn")?.addEventListener("click", goToStart);
+  el("checkBtn")?.addEventListener("click", reveal);
+  el("skipBtn")?.addEventListener("click", () => advance("skip"));
 
-  el("checkBtn").addEventListener("click", reveal);
-  el("skipBtn").addEventListener("click", () => advance("skip"));
+  el("rateGot")?.addEventListener("click", () => advance("got"));
+  el("rateClose")?.addEventListener("click", () => advance("close"));
+  el("rateMiss")?.addEventListener("click", () => advance("miss"));
 
-  el("rateGot").addEventListener("click", () => advance("got"));
-  el("rateClose").addEventListener("click", () => advance("close"));
-  el("rateMiss").addEventListener("click", () => advance("miss"));
-
-  // Teacher controls
-  el("exportBtn").addEventListener("click", exportJSON);
-  el("importFile").addEventListener("change", importJSON);
-  el("resetBtn").addEventListener("click", resetAll);
-  el("studentSelect").addEventListener("change", renderTeacherTableForSelectedStudent);
-
-  // Load cards.json
-  const res = await fetch("./cards.json", { cache: "no-store" });
-  const json = await res.json();
-  cards = (json.cards || []).map(c => ({ ...c, unit: Number(c.unit) }));
-
-  buildUnitCheckboxes();
-  showView("start");
+  el("exportBtn")?.addEventListener("click", exportJSON);
+  el("importFile")?.addEventListener("change", importJSON);
+  el("resetBtn")?.addEventListener("click", resetAll);
+  el("studentSelect")?.addEventListener("change", renderTeacherTableForSelectedStudent);
 }
 
-/* ---------- Views ---------- */
+async function loadCards() {
+  try {
+    const res = await fetch("./cards.json", { cache: "no-store" });
+    if (!res.ok) throw new Error(`cards.json not found (HTTP ${res.status})`);
+    const json = await res.json();
+    cards = (json.cards || []).map(c => ({ ...c, unit: Number(c.unit) }));
+  } catch (err) {
+    console.error(err);
+    alert("Could not load cards.json. Check that cards.json exists in the repo root and is committed.");
+    cards = [];
+  }
+}
+
 function showView(which) {
-  el("startView").classList.toggle("hidden", which !== "start");
-  el("studyView").classList.toggle("hidden", which !== "study");
-  el("teacherView").classList.toggle("hidden", which !== "teacher");
+  el("startView")?.classList.toggle("hidden", which !== "start");
+  el("studyView")?.classList.toggle("hidden", which !== "study");
+  el("teacherView")?.classList.toggle("hidden", which !== "teacher");
 }
 
-/* ---------- Units UI ---------- */
 function buildUnitCheckboxes() {
   const grid = el("unitGrid");
+  if (!grid) return;
   grid.innerHTML = "";
   for (let u = 1; u <= 7; u++) {
     const chip = document.createElement("label");
@@ -74,34 +80,34 @@ function buildUnitCheckboxes() {
   }
 }
 
-/* ---------- Student flow ---------- */
-function start() {
-  const name = el("studentName").value.trim();
+// Global functions used by inline onclick in HTML
+window.start = function start() {
+  const name = el("studentName")?.value?.trim();
   if (!name) return;
 
   currentStudent = name;
   ensureStudent(currentStudent);
 
   // collect selected units
-  selectedUnits = new Set(
-    Array.from(el("unitGrid").querySelectorAll('input[type="checkbox"]'))
-      .filter(cb => cb.checked)
-      .map(cb => Number(cb.value))
-  );
+  const checks = Array.from(el("unitGrid")?.querySelectorAll('input[type="checkbox"]') || []);
+  selectedUnits = new Set(checks.filter(c => c.checked).map(c => Number(c.value)));
 
-  if (selectedUnits.size === 0) {
-    return alert("Please select at least one unit.");
-  }
+  if (selectedUnits.size === 0) return alert("Please select at least one unit.");
 
-  const shuffle = el("shuffleToggle").checked;
-  const onlyNeeds = el("onlyNeedsToggle").checked;
+  const shuffle = !!el("shuffleToggle")?.checked;
+  const onlyNeeds = !!el("onlyNeedsToggle")?.checked;
 
   queue = buildQueue({ shuffle, onlyNeeds });
   idx = 0;
 
   showView("study");
   renderCard();
-}
+};
+
+window.goToStart = function goToStart() {
+  showView("start");
+  resetStudyUI();
+};
 
 function buildQueue({ shuffle, onlyNeeds }) {
   let list = [...cards];
@@ -124,64 +130,65 @@ function buildQueue({ shuffle, onlyNeeds }) {
 }
 
 function renderCard() {
-  if (queue.length === 0) {
-    el("questionImg").alt = "No cards found for these units.";
-    el("questionImg").src = "";
-    el("answerImg").src = "";
-    el("studentPill").textContent = `Student: ${currentStudent}`;
-    el("unitPill").textContent = `Units: ${[...selectedUnits].sort().join(", ")}`;
-    el("progressPill").textContent = "";
-    el("cardStats").textContent = "";
-    el("revealArea").classList.add("hidden");
-    el("answerCol").classList.add("hidden");
+  const answerCol = el("answerCol");
+  const revealArea = el("revealArea");
+  const answerBox = el("answerBox");
+
+  if (!queue.length) {
+    el("questionImg") && (el("questionImg").src = "");
+    el("answerImg") && (el("answerImg").src = "");
+    el("studentPill") && (el("studentPill").textContent = `Student: ${currentStudent}`);
+    el("unitPill") && (el("unitPill").textContent = `Units: ${[...selectedUnits].sort().join(", ")}`);
+    el("progressPill") && (el("progressPill").textContent = "");
+    el("cardStats") && (el("cardStats").textContent = "No cards found for these units.");
+    revealArea?.classList.add("hidden");
+    answerCol?.classList.add("hidden");
     return;
   }
 
   const c = queue[idx % queue.length];
 
-  el("studentPill").textContent = `Student: ${currentStudent}`;
-  el("unitPill").textContent = `Units: ${[...selectedUnits].sort().join(", ")}`;
-  el("progressPill").textContent = `Card ${ (idx % queue.length) + 1 } / ${queue.length} (Unit ${c.unit})`;
+  el("studentPill") && (el("studentPill").textContent = `Student: ${currentStudent}`);
+  el("unitPill") && (el("unitPill").textContent = `Units: ${[...selectedUnits].sort().join(", ")}`);
+  el("progressPill") && (el("progressPill").textContent = `Card ${ (idx % queue.length) + 1 } / ${queue.length} (Unit ${c.unit})`);
 
-  // Your naming convention: 1aQ / 1aA
-  el("questionImg").src = `./assets/${c.id}Q.png`;
-  el("answerImg").src = `./assets/${c.id}A.png`;
+  const q = el("questionImg");
+  const a = el("answerImg");
 
-  // Clear typed answer when moving to a new card
-  el("answerBox").value = "";
+  if (q) q.src = `./assets/${c.id}Q.png`;
+  if (a) a.src = `./assets/${c.id}A.png`;
 
-  // Hide answer/rating until Check
-  el("revealArea").classList.add("hidden");
-  el("answerCol").classList.add("hidden");
+  // Clear typed answer every new card
+  if (answerBox) answerBox.value = "";
+
+  // Hide answer/rating until check
+  revealArea?.classList.add("hidden");
+  answerCol?.classList.add("hidden");
 
   const s = progress.students[currentStudent].byCard[c.id] || { got:0, close:0, miss:0, attempts:0, timeMs:0 };
-  el("cardStats").textContent =
-    `This card — ✓ ${s.got}  ~ ${s.close}  ✗ ${s.miss}  | Attempts: ${s.attempts}  | Time: ${formatMs(s.timeMs)}`;
+  el("cardStats") && (el("cardStats").textContent =
+    `This card — ✓ ${s.got}  ~ ${s.close}  ✗ ${s.miss}  | Attempts: ${s.attempts}  | Time: ${formatMs(s.timeMs)}`
+  );
 
-  // start timing
   cardStartTs = Date.now();
 }
 
-function reveal() {
-  // Show answer image next to question AND show rating area
-  el("answerCol").classList.remove("hidden");
-  el("revealArea").classList.remove("hidden");
-}
+window.reveal = function reveal() {
+  const answerCol = el("answerCol");
+  const revealArea = el("revealArea");
 
-function resetStudyUI() {
-  el("answerBox").value = "";
-  el("revealArea").classList.add("hidden");
-  el("answerCol").classList.add("hidden");
-  cardStartTs = null;
-}
+  // If these IDs don't exist in the live HTML, you'll get a clear message.
+  if (!answerCol || !revealArea) {
+    alert('Check failed: missing "answerCol" or "revealArea" in index.html. Replace index.html with the full version I sent.');
+    return;
+  }
 
-/**
- * advance(mode)
- * mode = "got" | "close" | "miss" | "skip"
- * Records time + attempts always; ratings only for got/close/miss
- */
-function advance(mode) {
-  if (queue.length === 0) return;
+  answerCol.classList.remove("hidden");
+  revealArea.classList.remove("hidden");
+};
+
+window.advance = function advance(mode) {
+  if (!queue.length) return;
 
   const c = queue[idx % queue.length];
   const stu = progress.students[currentStudent];
@@ -191,9 +198,11 @@ function advance(mode) {
 
   if (!stu.byCard[c.id]) stu.byCard[c.id] = { got:0, close:0, miss:0, attempts:0, timeMs:0 };
 
+  // attempts/time always count when they leave the card
   stu.byCard[c.id].attempts += 1;
   stu.byCard[c.id].timeMs += dt;
 
+  // rating counts only if got/close/miss
   if (mode === "got" || mode === "close" || mode === "miss") {
     stu.totals[mode] += 1;
     stu.byCard[c.id][mode] += 1;
@@ -203,6 +212,13 @@ function advance(mode) {
 
   idx++;
   renderCard();
+};
+
+function resetStudyUI() {
+  el("answerBox") && (el("answerBox").value = "");
+  el("revealArea")?.classList.add("hidden");
+  el("answerCol")?.classList.add("hidden");
+  cardStartTs = null;
 }
 
 /* ---------- Progress storage ---------- */
@@ -231,30 +247,30 @@ function saveProgress(obj) {
 /* ---------- Teacher dashboard ---------- */
 function renderTeacher() {
   const sel = el("studentSelect");
+  if (!sel) return;
   sel.innerHTML = "";
 
   const students = Object.keys(progress.students).sort((a,b)=>a.localeCompare(b));
-  if (students.length === 0) {
+  if (!students.length) {
     sel.appendChild(new Option("No students yet", ""));
-    el("teacherTable").innerHTML = "";
+    el("teacherTable") && (el("teacherTable").innerHTML = "");
     return;
   }
 
   students.forEach(s => sel.appendChild(new Option(s, s)));
   sel.value = students[0];
-
   renderTeacherTableForSelectedStudent();
 }
 
 function renderTeacherTableForSelectedStudent() {
-  const student = el("studentSelect").value;
+  const student = el("studentSelect")?.value;
   const body = el("teacherTable");
+  if (!body) return;
   body.innerHTML = "";
 
   if (!student || !progress.students[student]) return;
 
   const byCard = progress.students[student].byCard || {};
-
   const sortedCards = [...cards].sort((a,b)=>{
     if (a.unit !== b.unit) return a.unit - b.unit;
     return a.id.localeCompare(b.id, undefined, { numeric:true });
