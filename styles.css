@@ -3,6 +3,11 @@
   --primary:#2d7ef7; --secondary:#444; --ghost:#e6eefc;
   --ok:#1a8f3a; --warn:#c77700; --danger:#d93025;
   --border:#d9e2f2;
+
+  --green:#bfe7c8;
+  --yellow:#ffe7a8;
+  --red:#ffc1c1;
+  --gray:#e6e9ef;
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial;background:var(--bg);color:var(--text);padding:20px}
@@ -39,17 +44,21 @@ button{
 
 .toggles{
   display:flex;
-  gap:14px;
+  gap:10px;
   justify-content:center;
   flex-wrap:wrap;
   margin:10px 0;
 }
-.toggles label{
+.pill{
   background:#f1f4f9;
   padding:8px 10px;
   border-radius:999px;
   font-size:14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
+.pill input{width:auto}
 
 .topbar{
   display:flex;
@@ -59,7 +68,7 @@ button{
   flex-wrap:wrap;
 }
 .pills{display:flex;gap:8px;flex-wrap:wrap}
-.pill{
+.pillSmall{
   display:inline-block;
   background:#f1f4f9;
   padding:6px 10px;
@@ -121,7 +130,7 @@ th{background:#f7f9fc}
   .unitGrid{grid-template-columns:repeat(3, minmax(0,1fr));}
 }
 
-/* Side-by-side question/answer images */
+/* Side-by-side images */
 .imgRow{
   display:flex;
   gap:20px;
@@ -145,3 +154,52 @@ th{background:#f7f9fc}
   border-radius:12px;
   border:1px solid var(--border);
 }
+
+/* Student dashboard */
+.dashSummary{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin:10px 0 16px 0;
+}
+.summaryChip{
+  background:#f1f4f9;
+  border:1px solid #d9e2f2;
+  border-radius:999px;
+  padding:8px 12px;
+  font-size:14px;
+}
+
+.dashGrid{
+  display:grid;
+  grid-template-columns:repeat(8, minmax(0,1fr));
+  gap:8px;
+}
+@media (max-width:900px){
+  .dashGrid{grid-template-columns:repeat(4, minmax(0,1fr));}
+}
+
+.dashCard{
+  border:1px solid #d9e2f2;
+  border-radius:12px;
+  padding:10px;
+  font-size:14px;
+  text-align:center;
+  cursor:pointer;
+  user-select:none;
+}
+.dashCard small{display:block;color:var(--muted);margin-top:4px}
+
+.keyBox{
+  display:inline-block;
+  width:12px;height:12px;
+  border-radius:3px;
+  border:1px solid #bbb;
+  vertical-align:middle;
+  margin:0 4px;
+}
+.keyGreen{background:var(--green)}
+.keyYellow{background:var(--yellow)}
+.keyRed{background:var(--red)}
+.keyGray{background:var(--gray)}
