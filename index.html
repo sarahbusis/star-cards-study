@@ -30,7 +30,7 @@
         <label><input type="checkbox" id="onlyNeedsToggle"> Only ~ / ✗ (needs practice)</label>
       </div>
 
-      <button id="startBtn" class="primary">Start</button>
+      <button id="startBtn" class="primary" onclick="start()">Start</button>
 
       <p class="hint">
         Images must be in <b>assets/</b> named like <b>1aQ.png</b> and <b>1aA.png</b>.
@@ -45,7 +45,7 @@
           <span class="pill" id="unitPill"></span>
           <span class="pill" id="progressPill"></span>
         </div>
-        <button id="changeBtn" class="ghost">Change units</button>
+        <button id="changeBtn" class="ghost" onclick="goToStart()">Change units</button>
       </div>
 
       <h2 class="screenTitle">Study</h2>
@@ -66,16 +66,16 @@
       <textarea id="answerBox" rows="3" placeholder="Type your answer here..."></textarea>
 
       <div class="actions">
-        <button id="checkBtn" class="primary">Check</button>
-        <button id="skipBtn" class="ghost">Skip</button>
+        <button id="checkBtn" class="primary" onclick="reveal()">Check</button>
+        <button id="skipBtn" class="ghost" onclick="advance('skip')">Skip</button>
       </div>
 
       <section id="revealArea" class="hidden">
         <p class="screenTitle">Rate yourself</p>
         <div class="actions">
-          <button id="rateGot" class="ok">✓ Got it</button>
-          <button id="rateClose" class="warn">~ Close</button>
-          <button id="rateMiss" class="danger">✗ Need practice</button>
+          <button id="rateGot" class="ok" onclick="advance('got')">✓ Got it</button>
+          <button id="rateClose" class="warn" onclick="advance('close')">~ Close</button>
+          <button id="rateMiss" class="danger" onclick="advance('miss')">✗ Need practice</button>
         </div>
       </section>
 
