@@ -46,3 +46,30 @@ th{background:#f7f9fc}
 @media (max-width:720px){
   .unitGrid{grid-template-columns:repeat(3, minmax(0,1fr));}
 }
+
+.imgRow{
+  display:flex;
+  gap:20px;
+  justify-content:center;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  margin:15px 0;
+}
+
+.imgCol{
+  flex:1 1 400px;
+  max-width:500px;
+}
+
+.imgCol img{
+  width:100%;
+  border-radius:12px;
+  border:1px solid var(--border);
+}
+
+@media (max-width:900px){
+  .imgRow{
+    flex-direction:column;
+  }
+}
+
