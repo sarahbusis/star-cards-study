@@ -7,35 +7,117 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>STAR Cards Study</h1>
+  <header class="header">
+    <h1>STAR Cards Study</h1>
+    <div class="header-actions">
+      <button id="modeStudent" class="secondary">Student</button>
+      <button id="modeTeacher" class="secondary">Teacher</button>
+    </div>
+  </header>
 
-  <div id="app">
-    <div id="login">
+  <main class="card">
+
+    <!-- STUDENT: START -->
+    <section id="startView">
       <h2>Enter your name</h2>
-      <input id="studentName" placeholder="First name" />
+      <input id="studentName" placeholder="First name (or First + Last)" autocomplete="off" />
 
-      <button id="startBtn">Start</button>
-    </div>
+      <h2>Select unit(s) to study</h2>
+      <div class="unitGrid" id="unitGrid"></div>
 
-    <div id="study" style="display:none;">
-      <h2>Question</h2>
-      <img id="questionImg" width="600">
-
-      <textarea id="answerBox" rows="3" placeholder="Type your answer..."></textarea>
-
-      <button id="checkBtn">Check</button>
-
-      <div id="reveal" style="display:none;">
-        <h2>Answer</h2>
-        <img id="answerImg" width="600">
-
-        <p>Rate yourself:</p>
-        <button id="gotBtn">✓ Got it</button>
-        <button id="closeBtn">~ Close</button>
-        <button id="missBtn">✗ Need practice</button>
+      <div class="toggles">
+        <label><input type="checkbox" id="shuffleToggle" checked> Shuffle</label>
+        <label><input type="checkbox" id="onlyNeedsToggle"> Only ~ / ✗ (needs practice)</label>
       </div>
-    </div>
-  </div>
+
+      <button id="startBtn" class="primary">Start</button>
+
+      <p class="hint">
+        Images must be in <b>assets/</b> named like <b>1aQ.png</b> and <b>1aA.png</b>.
+      </p>
+    </section>
+
+    <!-- STUDENT: STUDY -->
+    <section id="studyView" class="hidden">
+      <div class="topbar">
+        <div class="pills">
+          <span class="pill" id="studentPill"></span>
+          <span class="pill" id="unitPill"></span>
+          <span class="pill" id="progressPill"></span>
+        </div>
+        <button id="changeBtn" class="ghost">Change units</button>
+      </div>
+
+      <h2 class="screenTitle">Question</h2>
+      <div class="imgWrap">
+        <img id="questionImg" alt="Question screenshot">
+      </div>
+
+      <textarea id="answerBox" rows="3" placeholder="Type your answer here..."></textarea>
+
+      <div class="actions">
+        <button id="checkBtn" class="primary">Check</button>
+        <button id="skipBtn" class="ghost">Skip</button>
+      </div>
+
+      <section id="revealArea" class="hidden">
+        <h2 class="screenTitle">Answer</h2>
+        <div class="imgWrap">
+          <img id="answerImg" alt="Answer screenshot">
+        </div>
+
+        <p class="screenTitle">Rate yourself</p>
+        <div class="actions">
+          <button id="rateGot" class="ok">✓ Got it</button>
+          <button id="rateClose" class="warn">~ Close</button>
+          <button id="rateMiss" class="danger">✗ Need practice</button>
+        </div>
+      </section>
+
+      <p class="stats" id="cardStats"></p>
+    </section>
+
+    <!-- TEACHER -->
+    <section id="teacherView" class="hidden">
+      <h2>Teacher dashboard (this device)</h2>
+      <p class="hint">
+        This dashboard reflects progress saved in this browser. Different devices won’t combine unless you export/import.
+      </p>
+
+      <div class="actions">
+        <button id="exportBtn" class="primary">Export JSON</button>
+        <label class="ghost fileLabel">
+          Import JSON
+          <input type="file" id="importFile" accept="application/json">
+        </label>
+        <button id="resetBtn" class="danger">Reset</button>
+      </div>
+
+      <div class="row">
+        <div class="panel">
+          <h3>Pick a student</h3>
+          <select id="studentSelect"></select>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Card</th>
+            <th>Unit</th>
+            <th>✓</th>
+            <th>~</th>
+            <th>✗</th>
+            <th>Attempts</th>
+            <th>Total Time</th>
+            <th>Avg / Attempt</th>
+          </tr>
+        </thead>
+        <tbody id="teacherTable"></tbody>
+      </table>
+    </section>
+
+  </main>
 
   <script src="app.js"></script>
 </body>
