@@ -159,11 +159,17 @@ function renderCard(){
 
 function reveal(){
   el("revealArea").classList.remove("hidden");
+  el("answerCol").classList.remove("hidden");
 }
+
 
 function resetStudyUI(){
   el("answerBox").value = "";
   el("revealArea").classList.add("hidden");
+  el("answerCol").classList.add("hidden");
+  
+  
+
   cardStartTs = null;
 }
 
