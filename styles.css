@@ -12,9 +12,23 @@ body{margin:0;font-family:Arial;background:var(--bg);color:var(--text);padding:2
 h1{margin:0}
 h2{margin:14px 0 8px}
 h3{margin:10px 0 8px}
-input,select,textarea{width:100%;padding:12px;border:1px solid #cdd6e3;border-radius:10px;font-size:16px}
+
+input,select,textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid #cdd6e3;
+  border-radius:10px;
+  font-size:16px;
+}
 textarea{resize:vertical}
-button{border:0;border-radius:10px;padding:10px 14px;font-size:15px;cursor:pointer}
+
+button{
+  border:0;
+  border-radius:10px;
+  padding:10px 14px;
+  font-size:15px;
+  cursor:pointer;
+}
 .primary{background:var(--primary);color:#fff}
 .secondary{background:var(--secondary);color:#fff}
 .ghost{background:var(--ghost);color:#114aa8}
@@ -22,31 +36,92 @@ button{border:0;border-radius:10px;padding:10px 14px;font-size:15px;cursor:point
 .warn{background:var(--warn);color:#fff}
 .danger{background:var(--danger);color:#fff}
 .hidden{display:none}
-.toggles{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:10px 0}
-.toggles label{background:#f1f4f9;padding:8px 10px;border-radius:999px;font-size:14px}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
+.toggles{
+  display:flex;
+  gap:14px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin:10px 0;
+}
+.toggles label{
+  background:#f1f4f9;
+  padding:8px 10px;
+  border-radius:999px;
+  font-size:14px;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
 .pills{display:flex;gap:8px;flex-wrap:wrap}
-.pill{display:inline-block;background:#f1f4f9;padding:6px 10px;border-radius:999px;font-size:13px}
-.imgWrap{margin:10px auto;max-width:920px}
-.imgWrap img{max-width:100%;border-radius:12px;border:1px solid var(--border)}
-.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.pill{
+  display:inline-block;
+  background:#f1f4f9;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:13px;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin:10px 0;
+}
+
 .hint{color:var(--muted);font-size:13px;margin-top:10px}
 .screenTitle{margin-top:14px}
 .stats{color:var(--muted);font-size:13px;margin-top:8px}
+
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ccc;padding:8px 10px;font-size:14px;text-align:center}
 th{background:#f7f9fc}
-.fileLabel{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;cursor:pointer}
+
+.fileLabel{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+}
 .fileLabel input{display:none}
+
 .row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:10px}
 .panel{width:min(520px, 100%);text-align:left}
-.unitGrid{display:grid;grid-template-columns:repeat(7, minmax(0,1fr));gap:8px;margin:10px 0}
-.unitChip{display:flex;align-items:center;justify-content:center;gap:8px;background:#f1f4f9;border:1px solid #d9e2f2;border-radius:12px;padding:10px;font-size:14px;cursor:pointer;user-select:none}
+
+.unitGrid{
+  display:grid;
+  grid-template-columns:repeat(7, minmax(0,1fr));
+  gap:8px;
+  margin:10px 0;
+}
+.unitChip{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:#f1f4f9;
+  border:1px solid #d9e2f2;
+  border-radius:12px;
+  padding:10px;
+  font-size:14px;
+  cursor:pointer;
+  user-select:none;
+}
 .unitChip input{width:auto}
+
 @media (max-width:720px){
   .unitGrid{grid-template-columns:repeat(3, minmax(0,1fr));}
 }
 
+/* Side-by-side question/answer images */
 .imgRow{
   display:flex;
   gap:20px;
@@ -55,21 +130,18 @@ th{background:#f7f9fc}
   flex-wrap:wrap;
   margin:15px 0;
 }
-
 .imgCol{
-  flex:1 1 400px;
-  max-width:500px;
+  flex:1 1 420px;
+  max-width:520px;
+  text-align:left;
 }
-
+.imgTitle{
+  margin:0 0 8px 0;
+  color:#223;
+  font-size:16px;
+}
 .imgCol img{
   width:100%;
   border-radius:12px;
   border:1px solid var(--border);
 }
-
-@media (max-width:900px){
-  .imgRow{
-    flex-direction:column;
-  }
-}
-
