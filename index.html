@@ -48,10 +48,19 @@
         <button id="changeBtn" class="ghost">Change units</button>
       </div>
 
-      <h2 class="screenTitle">Question</h2>
-      <div class="imgWrap">
-        <img id="questionImg" alt="Question screenshot">
-      </div>
+    <h2 class="screenTitle">Question</h2>
+
+<div class="imgRow">
+  <div class="imgCol">
+    <img id="questionImg" alt="Question screenshot">
+  </div>
+
+  <div class="imgCol hidden" id="answerCol">
+    <h3>Answer</h3>
+    <img id="answerImg" alt="Answer screenshot">
+  </div>
+</div>
+
 
       <textarea id="answerBox" rows="3" placeholder="Type your answer here..."></textarea>
 
@@ -60,11 +69,7 @@
         <button id="skipBtn" class="ghost">Skip</button>
       </div>
 
-      <section id="revealArea" class="hidden">
-        <h2 class="screenTitle">Answer</h2>
-        <div class="imgWrap">
-          <img id="answerImg" alt="Answer screenshot">
-        </div>
+   
 
         <p class="screenTitle">Rate yourself</p>
         <div class="actions">
