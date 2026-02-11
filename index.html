@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>STAR Cards Study</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>STAR Cards Study</h1>
+
+  <div id="app">
+    <div id="login">
+      <h2>Enter your name</h2>
+      <input id="studentName" placeholder="First name" />
+
+      <button id="startBtn">Start</button>
+    </div>
+
+    <div id="study" style="display:none;">
+      <h2>Question</h2>
+      <img id="questionImg" width="600">
+
+      <textarea id="answerBox" rows="3" placeholder="Type your answer..."></textarea>
+
+      <button id="checkBtn">Check</button>
+
+      <div id="reveal" style="display:none;">
+        <h2>Answer</h2>
+        <img id="answerImg" width="600">
+
+        <p>Rate yourself:</p>
+        <button id="gotBtn">✓ Got it</button>
+        <button id="closeBtn">~ Close</button>
+        <button id="missBtn">✗ Need practice</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
