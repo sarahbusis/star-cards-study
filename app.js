@@ -189,20 +189,25 @@ window.advance = function advance(mode){
   stu.byCard[c.id].attempts += 1;
   stu.byCard[c.id].timeMs += dt;
 // Send to backend (all devices)
-sendEventToBackend({
-  student: currentStudent,
-  cardId: c.id,
-  unit: c.unit,
-  rating: (mode === "got" || mode === "close" || mode === "miss") ? mode : "skip",
-  dtMs: dt,
-  lang: spanishMode ? "sp" : "en"
-});
-  // rating counts
-  if (mode === "got" || mode === "close" || mode === "miss"){
-    stu.totals[mode] += 1;
-    stu.byCard[c.id][mode] += 1;
-  }
+function sendEventToBackend(evt){
+  if (!BACKEND_URL) return;
 
+  const params = new URLSearchParams({
+    mode: "log",
+    student: evt.student,
+    cardId: evt.cardId,
+    unit: String(evt.unit ?? ""),
+    rating: evt.rating || "skip",
+    dtMs: String(evt.dtMs ?? 0),
+    lang: evt.lang || "en",
+    ua: navigator.userAgent
+  });
+
+  // Pixel GET (super reliable cross-origin)
+  const img = new Image();
+  img.referrerPolicy = "no-referrer";
+  img.src = `${BACKEND_URL}?${params.toString()}`;
+}
   saveProgress(progress);
 
   idx++;
