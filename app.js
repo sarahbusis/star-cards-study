@@ -2,6 +2,7 @@
 
 const BACKEND_URL = "https://script.google.com/macros/s/AKfycbyke09fUi9ChB1ewAUU4EzCDquAPC1RLRcCJcQwfzPfQF78G1giSrMKSNw2Ydwm6VxW/exec";
 const BACKEND_SECRET = "CHANGE_ME_TO_SOMETHING_LONG"; // must match SHARED_SECRET in Apps Script, or "" if disabled
+const STUDENT_CODE = "spark2026"; // must match Code.gs
 
 const STORAGE_KEY = "star_screenshot_progress_v3";
 const TEACHER_PIN = "2026";
@@ -144,26 +145,23 @@ window.goToStart = function goToStart(){
   resetStudyUI();
 };
 
-window.openStudentDashboard = function openStudentDashboard(){
-  // Prefer the active student if already studying
+window.openStudentDashboard = async function openStudentDashboard(){
   let name = (currentStudent || "").trim();
-
-  // If not studying yet, fall back to whatever is typed
   if (!name) name = (el("studentName")?.value || "").trim();
-
-  if (!name) {
-    alert("Enter your name first.");
-    return;
-  }
+  if (!name) return alert("Enter your name first.");
 
   currentStudent = name;
+  window.currentStudent = currentStudent;
   ensureStudent(currentStudent);
 
-  // Keep Spanish toggle consistent
   spanishMode = !!el("spanishToggle")?.checked;
 
   try{
-    renderStudentDashboard();
+    // Pull backend totals (all devices) and store them for dashboard rendering
+    const backendStu = await fetchBackendStudent(currentStudent);
+    window.__studentBackend = (backendStu && backendStu.ok) ? backendStu : null;
+
+    renderStudentDashboard();   // we’ll update this next to prefer backend
     showView("studentDash");
   } catch (err){
     console.error("Student dashboard error:", err);
@@ -317,13 +315,20 @@ function resetStudyUI(){
 
 /* ---------- Student dashboard ---------- */
 function renderStudentDashboard(){
-  const stu = progress.students[currentStudent];
-  if (!stu) {
-    alert("No data for this student yet.");
-    return;
-  }
+  const localStu = progress.students[currentStudent] || null;
 
-  // Safe element lookups
+  // Prefer backend (all devices) if available
+  const backend = window.__studentBackend;
+  const usingBackend = !!(backend && backend.ok && backend.byCard);
+
+  const byCard = usingBackend
+    ? (backend.byCard || {})
+    : (localStu?.byCard || {});
+
+  const weekTotal = usingBackend
+    ? (backend.timeWeek || 0)
+    : (sumWeeklyTotal(localStu).total || 0);
+
   const pill1 = el("dashStudentPill");
   const pill2 = el("dashLangPill");
   const pill3 = el("dashWeekPill");
@@ -332,28 +337,26 @@ function renderStudentDashboard(){
 
   pill1 && (pill1.textContent = `Student: ${currentStudent}`);
   pill2 && (pill2.textContent = spanishMode ? "Language: Español" : "Language: English");
-
-  const { total: weekTotal } = sumWeeklyTotal(stu);
-  pill3 && (pill3.textContent = `This week: ${formatMs(weekTotal)}`);
-
-  const byCard = stu.byCard || {};
-
-  // Totals across ALL cards in cards.json
-  let got=0, close=0, miss=0, notYet=0, attempts=0, timeMs=0;
-  for (const c of cards){
-    const s = byCard[c.id];
-    if (!s || (s.attempts || 0) === 0){
-      notYet++;
-      continue;
-    }
-    got += s.got || 0;
-    close += s.close || 0;
-    miss += s.miss || 0;
-    attempts += s.attempts || 0;
-    timeMs += s.timeMs || 0;
-  }
+  pill3 && (pill3.textContent =
+    `This week: ${formatMs(weekTotal)}${usingBackend ? " (all devices)" : " (this device)"}`
+  );
 
   if (sumBox){
+    let got=0, close=0, miss=0, notYet=0, attempts=0, timeMs=0;
+
+    for (const c of cards){
+      const s = byCard[c.id];
+      if (!s || (s.attempts || 0) === 0){
+        notYet++;
+        continue;
+      }
+      got += s.got || 0;
+      close += s.close || 0;
+      miss += s.miss || 0;
+      attempts += s.attempts || 0;
+      timeMs += s.timeMs || 0;
+    }
+
     sumBox.innerHTML = `
       <div class="summaryChip">✓ ${got}</div>
       <div class="summaryChip">~ ${close}</div>
@@ -367,7 +370,6 @@ function renderStudentDashboard(){
   if (!grid) return;
   grid.innerHTML = "";
 
-  // Sort by unit then id
   const sorted = [...cards].sort((a,b)=>{
     if (a.unit !== b.unit) return a.unit - b.unit;
     return a.id.localeCompare(b.id, undefined, { numeric:true });
@@ -375,7 +377,7 @@ function renderStudentDashboard(){
 
   for (const c of sorted){
     const s = byCard[c.id] || { got:0, close:0, miss:0, attempts:0, timeMs:0 };
-    const st = statusForCard(s); // uses existing function from your app.js
+    const st = statusForCard(s);
 
     const tile = document.createElement("div");
     tile.className = "dashCard";
@@ -389,7 +391,6 @@ function renderStudentDashboard(){
       `Attempts: ${s.attempts || 0}\n` +
       `Time: ${formatMs(s.timeMs || 0)}`;
 
-    // Click a tile = study just that card
     tile.addEventListener("click", () => {
       selectedUnits = new Set([Number(c.unit)]);
       queue = [c];
@@ -616,7 +617,42 @@ async function fetchBackendSummary(pin){
     document.body.appendChild(script);
   });
 }
+async function fetchBackendStudent(studentName){
+  if (!BACKEND_URL) return null;
 
+  return new Promise((resolve) => {
+    const cbName = "__star_stu_cb_" + Math.random().toString(36).slice(2);
+    const timeout = setTimeout(() => {
+      cleanup();
+      resolve(null);
+    }, 8000);
+
+    function cleanup(){
+      clearTimeout(timeout);
+      try { delete window[cbName]; } catch {}
+      script.remove();
+    }
+
+    window[cbName] = (data) => {
+      cleanup();
+      resolve(data);
+    };
+
+    const script = document.createElement("script");
+    const url =
+      `${BACKEND_URL}?mode=student` +
+      `&student=${encodeURIComponent(studentName)}` +
+      `&code=${encodeURIComponent(STUDENT_CODE)}` +
+      `&callback=${encodeURIComponent(cbName)}`;
+
+    script.src = url;
+    script.onerror = () => {
+      cleanup();
+      resolve(null);
+    };
+    document.body.appendChild(script);
+  });
+}
 async function sendEventToBackend(evt){
   if (!BACKEND_URL) return;
   try {
