@@ -20,7 +20,8 @@
     <!-- STUDENT: START -->
     <section id="startView">
       <h2>Enter your name</h2>
-      <input id="studentName" placeholder="First name (or First + Last)" autocomplete="off" />
+      <input id="studentName" list="recentStudents" autocomplete="off" placeholder="Type your name...">
+<datalist id="recentStudents"></datalist>
 
       <h2>Select unit(s) to study</h2>
       <div class="unitGrid" id="unitGrid"></div>
