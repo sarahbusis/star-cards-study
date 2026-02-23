@@ -186,7 +186,15 @@ window.advance = function advance(mode){
   // time + attempts always count
   stu.byCard[c.id].attempts += 1;
   stu.byCard[c.id].timeMs += dt;
-
+// Send to backend (all devices)
+sendEventToBackend({
+  student: currentStudent,
+  cardId: c.id,
+  unit: c.unit,
+  rating: (mode === "got" || mode === "close" || mode === "miss") ? mode : "skip",
+  dtMs: dt,
+  lang: spanishMode ? "sp" : "en"
+});
   // rating counts
   if (mode === "got" || mode === "close" || mode === "miss"){
     stu.totals[mode] += 1;
