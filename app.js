@@ -34,19 +34,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 function wireUI(){
   el("modeStudent")?.addEventListener("click", () => showView("start"));
 
-  // Teacher mode now pulls from backend (all devices) with local fallback
   el("modeTeacher")?.addEventListener("click", async () => {
     const pin = prompt("Teacher PIN:");
     if (pin !== TEACHER_PIN) return alert("Incorrect PIN.");
 
     showView("teacher");
 
-    // Try backend first
+    // Try backend first (JSONP)
     const backend = await fetchBackendSummary(pin);
     if (backend && backend.ok && backend.students) {
       window.__teacherDataSource = "backend";
       window.__teacherBackendStudents = backend.students;
-      renderTeacherFromBackend(backend.students, pin);
+      renderTeacherFromBackend(backend.students);
       return;
     }
 
@@ -56,12 +55,6 @@ function wireUI(){
     alert("Backend not reachable — showing only this device’s data.");
   });
 
-  // Export/import/reset still operate on localStorage only (backend is a Google Sheet).
-  el("exportBtn")?.addEventListener("click", exportJSON);
-  el("importFile")?.addEventListener("change", importJSON);
-  el("resetBtn")?.addEventListener("click", resetAll);
-
-  // Student picker in teacher dashboard: backend or local
   el("studentSelect")?.addEventListener("change", () => {
     if (window.__teacherDataSource === "backend") {
       const students = window.__teacherBackendStudents || {};
