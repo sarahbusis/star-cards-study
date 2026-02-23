@@ -71,8 +71,27 @@ async function loadCards(){
   try{
     const res = await fetch("./cards.json", { cache: "no-store" });
     if (!res.ok) throw new Error(`cards.json not found (HTTP ${res.status})`);
+
     const json = await res.json();
-    cards = (json.cards || []).map(c => ({ ...c, unit: Number(c.unit) }));
+
+    // Support BOTH formats:
+    // 1) Old: { cards: [...] }
+    // 2) New: [ ... ]
+    const arr = Array.isArray(json) ? json : (json.cards || []);
+
+    cards = arr.map(c => ({
+      ...c,
+      unit: Number(c.unit),
+      // Optional: default image paths if not provided
+      q: c.q || `assets/${c.id}Q.png`,
+      a: c.a || `assets/${c.id}A.png`,
+      qsp: c.qsp || `assets/${c.id}Qsp.png`,
+      asp: c.asp || `assets/${c.id}Asp.png`,
+      text: c.text || "",
+      answerText: c.answerText || "",
+      textSp: c.textSp || "",
+      answerTextSp: c.answerTextSp || ""
+    }));
   }catch(err){
     console.error(err);
     alert("Could not load cards.json. Make sure it exists in the repo root.");
@@ -293,8 +312,28 @@ function renderCard(){
   const q = el("questionImg");
   const a = el("answerImg");
 
-  if (q) q.src = imgPath(c.id, "Q");
-  if (a) a.src = imgPath(c.id, "A");
+// Use image paths from cards.json (Spanish with fallback)
+if (q){
+  q.onerror = null;
+  q.src = spanishMode ? (c.qsp || c.q) : (c.q || "");
+  q.onerror = () => {
+    if (spanishMode && c.q) {
+      q.onerror = null;
+      q.src = c.q; // fallback to English
+    }
+  };
+}
+
+if (a){
+  a.onerror = null;
+  a.src = spanishMode ? (c.asp || c.a) : (c.a || "");
+  a.onerror = () => {
+    if (spanishMode && c.a) {
+      a.onerror = null;
+      a.src = c.a; // fallback to English
+    }
+  };
+}
 
   // Fallback to English if Spanish image missing
 if (q){
