@@ -121,6 +121,8 @@ window.start = function start(){
   if (!name) return alert("Please enter your name.");
 
   currentStudent = name;
+  addRecentName(currentStudent);
+renderRecentNamesSuggestions();
   window.currentStudent = currentStudent; // <-- make visible for debugging + consistency
   ensureStudent(currentStudent);
 
@@ -151,6 +153,8 @@ window.openStudentDashboard = async function openStudentDashboard(){
   if (!name) return alert("Enter your name first.");
 
   currentStudent = name;
+  addRecentName(currentStudent);
+renderRecentNamesSuggestions();
   window.currentStudent = currentStudent;
   ensureStudent(currentStudent);
 
@@ -872,3 +876,57 @@ function statusForCard(s){
 }
 
 console.log("[STAR] statusForCard loaded:", typeof statusForCard);
+
+// ---- Recent student names (local device only) ----
+const RECENT_NAMES_KEY = "star_recent_students_v1";
+const MAX_RECENT_NAMES = 25;
+
+function loadRecentNames(){
+  try{
+    const raw = localStorage.getItem(RECENT_NAMES_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentNames(arr){
+  try{
+    localStorage.setItem(RECENT_NAMES_KEY, JSON.stringify(arr));
+  } catch (e){
+    console.warn("saveRecentNames failed:", e);
+  }
+}
+
+function addRecentName(name){
+  const n = (name || "").trim();
+  if (!n) return;
+
+  let arr = loadRecentNames();
+
+  // de-dupe (case-insensitive), keep most-recent first
+  arr = arr.filter(x => String(x).toLowerCase() !== n.toLowerCase());
+  arr.unshift(n);
+
+  if (arr.length > MAX_RECENT_NAMES) arr = arr.slice(0, MAX_RECENT_NAMES);
+  saveRecentNames(arr);
+}
+
+function renderRecentNamesSuggestions(){
+  const dl = el("recentStudents");
+  if (!dl) return;
+
+  const arr = loadRecentNames();
+  dl.innerHTML = "";
+  for (const name of arr){
+    const opt = document.createElement("option");
+    opt.value = name;
+    dl.appendChild(opt);
+  }
+}
+
+// ---- Initialize recent student suggestions on page load ----
+document.addEventListener("DOMContentLoaded", () => {
+  renderRecentNamesSuggestions();
+});
