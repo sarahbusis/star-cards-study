@@ -147,7 +147,7 @@ renderRecentNamesSuggestions();
   ensureStudent(currentStudent);
 
   spanishMode = !!el("spanishToggle")?.checked;
-
+setSpanishMode(spanishMode); 
   const checks = Array.from(el("unitGrid")?.querySelectorAll('input[type="checkbox"]') || []);
   selectedUnits = new Set(checks.filter(c => c.checked).map(c => Number(c.value)));
   if (selectedUnits.size === 0) return alert("Please select at least one unit to study.");
@@ -305,6 +305,11 @@ function renderCard(){
   }
 
   const c = queue[idx % queue.length];
+
+  const hint = el("clickReadHint");
+if (hint){
+  hint.textContent = spanishMode ? "Haz clic para leer en voz alta." : "Click the card to read aloud.";
+}
 
   el("progressPill") && (el("progressPill").textContent =
     `Card ${ (idx % queue.length) + 1 } / ${queue.length} (Unit ${c.unit})`
@@ -1047,7 +1052,7 @@ function speak(text){
   window.speechSynthesis.cancel();
 
   const u = new SpeechSynthesisUtterance(text);
-  const rate = Number(el("ttsRate")?.value || 1.0);
+  const rate = getTtsRate();
   u.rate = Math.min(1.3, Math.max(0.7, rate));
 
   const v = pickVoiceForLang(spanishMode ? "sp" : "en");
@@ -1128,3 +1133,58 @@ function ttsSpeak(text, key){
 
   window.speechSynthesis.speak(u);
 }
+// ---- Global language toggle (English/Spanish) ----
+function setSpanishMode(on){
+  spanishMode = !!on;
+
+  // keep the global toggle synced
+  const g = el("globalSpanishToggle");
+  if (g) g.checked = spanishMode;
+
+  // Re-render current view so images/text update immediately
+  // Stop reading if switching language
+  if (typeof ttsStop === "function") ttsStop();
+
+  // If you track views, use that; otherwise safely try both
+  try { renderCard(); } catch {}
+  try { renderStudentDashboard(); } catch {}
+  try { renderTeacher(); } catch {}
+}
+
+function wireGlobalLanguageToggle(){
+  const g = el("globalSpanishToggle");
+  if (!g) return;
+
+  g.addEventListener("change", () => {
+    setSpanishMode(g.checked);
+  });
+}
+const TTS_RATE_KEY = "star_tts_rate_v1";
+
+function getTtsRate(){
+  // Prefer slider value if present; otherwise use saved value; fallback 1.0
+  const slider = el("ttsRate");
+  if (slider) {
+    const v = Number(slider.value || 1.0);
+    if (!Number.isNaN(v)) return v;
+  }
+  const saved = Number(localStorage.getItem(TTS_RATE_KEY) || 1.0);
+  return Number.isNaN(saved) ? 1.0 : saved;
+}
+
+function wireTtsRatePersistence(){
+  const slider = el("ttsRate");
+  if (!slider) return;
+
+  // load saved value into slider
+  const saved = localStorage.getItem(TTS_RATE_KEY);
+  if (saved !== null) slider.value = String(saved);
+
+  slider.addEventListener("input", () => {
+    localStorage.setItem(TTS_RATE_KEY, String(slider.value));
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  wireTtsRatePersistence();
+});
