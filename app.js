@@ -29,7 +29,8 @@ function el(id){
 
 document.addEventListener("DOMContentLoaded", async () => {
   wireUI();
-  await loadCards();
+  await loadCards(); 
+  buildUnitUI();
   buildUnitCheckboxesUnchecked(); // units start UNCHECKED
   showView("start");
 });
@@ -112,6 +113,36 @@ function showView(which){
 }
 
 /* ---------- Units UI ---------- */
+function buildUnitUI(){
+  const grid = el("unitGrid");
+  if (!grid) return;
+
+  // Build list of units that actually exist in cards.json
+  const units = [...new Set((cards || []).map(c => Number(c.unit)).filter(n => Number.isFinite(n)))]
+    .sort((a,b) => a-b);
+
+  grid.innerHTML = "";
+
+  if (units.length === 0){
+    grid.innerHTML = `<div class="hint">No cards loaded yet.</div>`;
+    return;
+  }
+
+  for (const u of units){
+    const id = `unit_${u}`;
+
+    const label = document.createElement("label");
+    label.className = "unitChip";
+
+    label.innerHTML = `
+      <input type="checkbox" value="${u}" id="${id}">
+      <span>Unit ${u}</span>
+    `;
+
+    grid.appendChild(label);
+  }
+}
+
 function buildUnitCheckboxesUnchecked(){
   const grid = el("unitGrid");
   if (!grid) return;
@@ -151,26 +182,25 @@ renderRecentNamesSuggestions();
   window.currentStudent = currentStudent; // <-- make visible for debugging + consistency
   ensureStudent(currentStudent);
 
-  spanishMode = !!el("spanishToggle")?.checked;
+ 
 function setSpanishMode(on){
   spanishMode = !!on;
-localStorage.setItem(LANG_KEY, spanishMode ? "sp" : "en");
+
   const btn = el("langToggleBtn");
   if (btn){
+    // When Spanish is ON, button says “English” so kids know how to switch back
     btn.textContent = spanishMode ? "English" : "Español";
   }
 
-  // Update any language pills if visible
+  // Update language pill if present
   el("langPill") && (
-    el("langPill").textContent = spanishMode
-      ? "Language: Español"
-      : "Language: English"
+    el("langPill").textContent = spanishMode ? "Language: Español" : "Language: English"
   );
 
   // Stop reading if TTS exists
   if (typeof ttsStop === "function") ttsStop();
 
-  // Re-render active views so images swap instantly
+  // Re-render current views so images swap immediately
   try { renderCard(); } catch {}
   try { renderStudentDashboard(); } catch {}
 }
