@@ -170,6 +170,15 @@ window.advance = function advance(mode){
 
   idx++;
   renderCard();
+sendEventToBackend({
+  student: currentStudent,
+  cardId: c.id,
+  unit: c.unit,
+  rating: (mode === "got" || mode === "close" || mode === "miss") ? mode : "skip",
+  dtMs: dt,
+  lang: spanishMode ? "sp" : "en"
+});
+  
 };
 
 /* ---------- Queue building ---------- */
@@ -462,4 +471,22 @@ function escapeHtml(str){
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
+}
+async function sendEventToBackend(evt) {
+  if (!BACKEND_URL) return;
+
+  try {
+    await fetch(BACKEND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...evt,
+        secret: BACKEND_SECRET,
+        userAgent: navigator.userAgent
+      })
+    });
+  } catch (e) {
+    // Don’t block studying if internet is flaky
+    console.warn("Backend send failed:", e);
+  }
 }
