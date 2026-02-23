@@ -101,20 +101,21 @@ function buildUnitCheckboxesUnchecked(){
 }
 
 /* ---------- Image paths (English vs Spanish) ---------- */
-function imgPath(cardId, kind){
-  // English:
-  // assets/1aQ.png
-  // assets/1aA.png
-  //
-  // Spanish (your convention):
-  // assets/1aQsp.png
-  // assets/1aAsp.png
-  if (spanishMode){
-    return `./assets/${cardId}${kind}sp.png`;
-  }
-  return `./assets/${cardId}${kind}.png`;
-}
+function imgPath(id, type){
+  // type is "Q" or "A"
 
+  if (!spanishMode){
+    return `assets/${id}${type}.png`;
+  }
+
+  // Try Spanish version first
+  const spPath = `assets/${id}${type}sp.png`;
+  const enPath = `assets/${id}${type}.png`;
+
+  // We can’t truly check existence synchronously,
+  // so rely on browser error fallback
+  return spPath;
+}
 /* ---------- Public functions (inline onclick) ---------- */
 window.start = function start(){
   const name = (el("studentName")?.value || "").trim();
@@ -295,6 +296,21 @@ function renderCard(){
   if (q) q.src = imgPath(c.id, "Q");
   if (a) a.src = imgPath(c.id, "A");
 
+  // Fallback to English if Spanish image missing
+if (q){
+  q.onerror = () => {
+    q.onerror = null;
+    q.src = `assets/${c.id}Q.png`;
+  };
+}
+
+if (a){
+  a.onerror = () => {
+    a.onerror = null;
+    a.src = `assets/${c.id}A.png`;
+  };
+}
+  
   // clear typed answer
   if (answerBox) answerBox.value = "";
 
