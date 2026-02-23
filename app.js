@@ -792,3 +792,29 @@ function sumWeeklyTotal(stu){
 }
 
 console.log("[STAR] helpers loaded:", typeof sumWeeklyTotal);
+
+// ---- Card status helper (Student Dashboard) ----
+function statusForCard(s){
+  // Returns { color, label } for a student's per-card stats object
+  if (!s || (s.attempts || 0) === 0){
+    return { color: "var(--gray)", label: "Not attempted" };
+  }
+
+  const got = s.got || 0;
+  const close = s.close || 0;
+  const miss = s.miss || 0;
+
+  if (miss > close && miss > got){
+    return { color: "var(--red)", label: "Needs practice" };
+  }
+  if (close > got){
+    return { color: "var(--yellow)", label: "Close" };
+  }
+  if (got > 0){
+    return { color: "var(--green)", label: "Got it" };
+  }
+
+  return { color: "var(--gray)", label: "Not attempted" };
+}
+
+console.log("[STAR] statusForCard loaded:", typeof statusForCard);
