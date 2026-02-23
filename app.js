@@ -1,6 +1,6 @@
 
 
-const BACKEND_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrRlz_Ch5UAIT8sZrTy267oMS-relZFINEz3D4lGAj8XXgI_QlQ-1TL3LRoS-YK_cAogAxojIGzRQB90UP3CFInnnTjXqCBUWYXAne62520Pbjv04N1xuAGc81I_lazKCdrmsY2lAYHMZWEGWNyBBgG_nONfTmT93h2bazrzetiRxdKi2S5PDmqsJk2JRqua4TOm55MKLczHU6VeViTM12tj061cdxXtqwv_ot2Ro5RVboFYgV8jInH_Zuw7osYKx6bhKASREBDTL6QNnHxsJb_l3UCBvRjaFLjI8ACYtXL-e00r_it7WhTc3SWKMw&lib=MEzf8oORX2t_FUocMOqbnhgZ3bQAJeipN";
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbyke09fUi9ChB1ewAUU4EzCDquAPC1RLRcCJcQwfzPfQF78G1giSrMKSNw2Ydwm6VxW/exec";
 const BACKEND_SECRET = "CHANGE_ME_TO_SOMETHING_LONG"; // must match SHARED_SECRET in Apps Script, or "" if disabled
 
 const STORAGE_KEY = "star_screenshot_progress_v3";
