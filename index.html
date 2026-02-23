@@ -90,30 +90,32 @@
       <p class="stats" id="cardStats"></p>
     </section>
 
-    <!-- STUDENT DASHBOARD -->
-    <section id="studentDashView" class="hidden">
-      <div class="topbar">
-        <div class="pills">
-          <span class="pillSmall" id="dashStudentPill"></span>
-          <span class="pillSmall" id="dashLangPill"></span>
-        </div>
-        <div class="actions" style="margin:0;">
-          <button class="ghost" onclick="goToStart()">Back</button>
-        </div>
-      </div>
+   <!-- STUDENT DASHBOARD -->
+<section id="studentDashView" class="hidden">
+  <div class="topbar">
+    <div class="pills">
+      <span class="pillSmall" id="dashStudentPill"></span>
+      <span class="pillSmall" id="dashLangPill"></span>
+      <span class="pillSmall" id="dashWeekPill"></span>
+    </div>
+    <div class="actions" style="margin:0;">
+      <button class="ghost" onclick="goToStart()">Back</button>
+    </div>
+  </div>
 
-      <h2>My Dashboard</h2>
-      <p class="hint">
-        Color key:
-        <span class="keyBox keyGreen"></span> ✓ Got it,
-        <span class="keyBox keyYellow"></span> ~ Close,
-        <span class="keyBox keyRed"></span> ✗ Need practice,
-        <span class="keyBox keyGray"></span> Not yet
-      </p>
+  <h2>My Dashboard</h2>
 
-      <div class="dashSummary" id="dashSummary"></div>
-      <div class="dashGrid" id="dashGrid"></div>
-    </section>
+  <p class="hint">
+    Key:
+    <span class="keyBox keyGreen"></span> ✓ Got it,
+    <span class="keyBox keyYellow"></span> ~ Close,
+    <span class="keyBox keyRed"></span> ✗ Need practice,
+    <span class="keyBox keyGray"></span> Not yet
+  </p>
+
+  <div class="dashSummary" id="dashSummary"></div>
+  <div class="dashGrid" id="dashGrid"></div>
+</section> 
 
     <!-- TEACHER -->
     <section id="teacherView" class="hidden">
