@@ -144,18 +144,31 @@ window.goToStart = function goToStart(){
 };
 
 window.openStudentDashboard = function openStudentDashboard(){
-  const name = el("studentName")?.value?.trim() || currentStudent;
-  if (!name) return alert("Enter your name first.");
+  // Prefer the active student if already studying
+  let name = (currentStudent || "").trim();
+
+  // If not studying yet, fall back to whatever is typed
+  if (!name) name = (el("studentName")?.value || "").trim();
+
+  if (!name) {
+    alert("Enter your name first.");
+    return;
+  }
 
   currentStudent = name;
   ensureStudent(currentStudent);
 
+  // Keep Spanish toggle consistent
   spanishMode = !!el("spanishToggle")?.checked;
 
-  renderStudentDashboard();
-  showView("studentDash");
+  try{
+    renderStudentDashboard();
+    showView("studentDash");
+  } catch (err){
+    console.error("Student dashboard error:", err);
+    alert("Student dashboard hit an error. Open Console to see details.");
+  }
 };
-
 window.reveal = function reveal(){
   const answerCol = el("answerCol");
   const revealArea = el("revealArea");
@@ -293,17 +306,32 @@ function resetStudyUI(){
 
 /* ---------- Student dashboard ---------- */
 function renderStudentDashboard(){
-  el("dashStudentPill") && (el("dashStudentPill").textContent = `Student: ${currentStudent}`);
-  el("dashLangPill") && (el("dashLangPill").textContent = spanishMode ? "Language: Español" : "Language: English");
-
   const stu = progress.students[currentStudent];
+  if (!stu) {
+    alert("No data for this student yet.");
+    return;
+  }
+
+  // Safe element lookups
+  const pill1 = el("dashStudentPill");
+  const pill2 = el("dashLangPill");
+  const pill3 = el("dashWeekPill");
+  const sumBox = el("dashSummary");
+  const grid = el("dashGrid");
+
+  pill1 && (pill1.textContent = `Student: ${currentStudent}`);
+  pill2 && (pill2.textContent = spanishMode ? "Language: Español" : "Language: English");
+
+  const { total: weekTotal } = sumWeeklyTotal(stu);
+  pill3 && (pill3.textContent = `This week: ${formatMs(weekTotal)}`);
+
   const byCard = stu.byCard || {};
 
+  // Totals across ALL cards in cards.json
   let got=0, close=0, miss=0, notYet=0, attempts=0, timeMs=0;
-
   for (const c of cards){
     const s = byCard[c.id];
-    if (!s || s.attempts === 0){
+    if (!s || (s.attempts || 0) === 0){
       notYet++;
       continue;
     }
@@ -314,22 +342,21 @@ function renderStudentDashboard(){
     timeMs += s.timeMs || 0;
   }
 
-  const sum = el("dashSummary");
-  if (sum){
-    sum.innerHTML = `
+  if (sumBox){
+    sumBox.innerHTML = `
       <div class="summaryChip">✓ ${got}</div>
       <div class="summaryChip">~ ${close}</div>
       <div class="summaryChip">✗ ${miss}</div>
       <div class="summaryChip">Not yet: ${notYet}</div>
       <div class="summaryChip">Attempts: ${attempts}</div>
-      <div class="summaryChip">Time: ${formatMs(timeMs)}</div>
+      <div class="summaryChip">Time ever: ${formatMs(timeMs)}</div>
     `;
   }
 
-  const grid = el("dashGrid");
   if (!grid) return;
   grid.innerHTML = "";
 
+  // Sort by unit then id
   const sorted = [...cards].sort((a,b)=>{
     if (a.unit !== b.unit) return a.unit - b.unit;
     return a.id.localeCompare(b.id, undefined, { numeric:true });
@@ -337,26 +364,22 @@ function renderStudentDashboard(){
 
   for (const c of sorted){
     const s = byCard[c.id] || { got:0, close:0, miss:0, attempts:0, timeMs:0 };
-
-    // determine color by "latest strongest" signal:
-    // If any miss > close and miss > got => red
-    // else if any close > got => yellow
-    // else if got > 0 => green
-    // else gray
-    let bg = "var(--gray)";
-    if ((s.miss || 0) > (s.close || 0) && (s.miss || 0) > (s.got || 0)) bg = "var(--red)";
-    else if ((s.close || 0) > (s.got || 0)) bg = "var(--yellow)";
-    else if ((s.got || 0) > 0) bg = "var(--green)";
+    const st = statusForCard(s); // uses existing function from your app.js
 
     const tile = document.createElement("div");
     tile.className = "dashCard";
-    tile.style.background = bg;
-    tile.innerHTML = `<b>${c.id}</b> <small>Unit ${c.unit}</small>`;
-    tile.title = `✓ ${s.got}  ~ ${s.close}  ✗ ${s.miss}\nAttempts: ${s.attempts}\nTime: ${formatMs(s.timeMs)}`;
+    tile.style.background = st.color;
 
-    // Clicking a tile starts studying that single card (nice shortcut)
+    tile.innerHTML = `<b>${escapeHtml(c.id)}</b><small>Unit ${c.unit}</small>`;
+
+    tile.title =
+      `${st.label}\n` +
+      `✓ ${s.got || 0}  ~ ${s.close || 0}  ✗ ${s.miss || 0}\n` +
+      `Attempts: ${s.attempts || 0}\n` +
+      `Time: ${formatMs(s.timeMs || 0)}`;
+
+    // Click a tile = study just that card
     tile.addEventListener("click", () => {
-      // set selected units to that card's unit so it’s included
       selectedUnits = new Set([Number(c.unit)]);
       queue = [c];
       idx = 0;
@@ -367,7 +390,6 @@ function renderStudentDashboard(){
     grid.appendChild(tile);
   }
 }
-
 /* ---------- Teacher dashboard ---------- */
 function renderTeacher(){
   const sel = el("studentSelect");
