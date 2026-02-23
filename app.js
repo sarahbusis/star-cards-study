@@ -770,3 +770,25 @@ function statusForCardBackend(s){
     pillHtml: `<span class="statusPill">Not yet</span>`
   };
 }
+// ---- Weekly time helpers (needed for Student Dashboard) ----
+function startOfWeekLocalTs(nowTs){
+  const d = new Date(nowTs);
+  const day = d.getDay(); // 0=Sun,1=Mon...
+  const diffToMonday = (day === 0) ? 6 : (day - 1);
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - diffToMonday);
+  return d.getTime();
+}
+
+function sumWeeklyTotal(stu){
+  const weekStart = startOfWeekLocalTs(Date.now());
+  let total = 0;
+  if (!stu || !Array.isArray(stu.log)) return { weekStart, total: 0 };
+
+  for (const e of stu.log){
+    if ((e.ts || 0) >= weekStart) total += (e.dtMs || 0);
+  }
+  return { weekStart, total };
+}
+
+console.log("[STAR] helpers loaded:", typeof sumWeeklyTotal);
