@@ -116,10 +116,11 @@ function imgPath(cardId, kind){
 
 /* ---------- Public functions (inline onclick) ---------- */
 window.start = function start(){
-  const name = el("studentName")?.value?.trim();
+  const name = (el("studentName")?.value || "").trim();
   if (!name) return alert("Please enter your name.");
 
   currentStudent = name;
+  window.currentStudent = currentStudent; // <-- make visible for debugging + consistency
   ensureStudent(currentStudent);
 
   spanishMode = !!el("spanishToggle")?.checked;
@@ -461,16 +462,23 @@ function ensureStudent(name){
 
 function loadProgress(){
   try{
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { students:{} };
-  }catch{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const obj = raw ? JSON.parse(raw) : null;
+    if (!obj || typeof obj !== "object") return { students:{} };
+    if (!obj.students || typeof obj.students !== "object") obj.students = {};
+    return obj;
+  } catch {
     return { students:{} };
   }
 }
 
 function saveProgress(obj){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  } catch (e){
+    console.warn("saveProgress failed:", e);
+  }
 }
-
 function exportJSON(){
   const blob = new Blob([JSON.stringify(progress, null, 2)], { type:"application/json" });
   const url = URL.createObjectURL(blob);
