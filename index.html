@@ -30,6 +30,12 @@
     Español
   </label>
 </div>
+      <div class="row" style="justify-content:center; gap:12px; margin:10px 0;">
+  <label style="display:flex; align-items:center; gap:8px;">
+    Read speed
+    <input type="range" id="ttsRate" min="0.7" max="1.3" step="0.1" value="1.0">
+  </label>
+</div>
       <h2>Select unit(s) to study</h2>
       <div class="unitGrid" id="unitGrid"></div>
 
@@ -55,17 +61,7 @@
       <div class="topbar">
 <div class="row" style="justify-content:center; gap:12px; margin:10px 0;">
   <label style="display:flex; align-items:center; gap:8px;">
-    <input type="checkbox" id="ttsToggle">
-    Read cards out loud
-  </label>
-
-  <button class="ghost" type="button" onclick="readCardNow()">🔊 Read</button>
-
-  <label style="display:flex; align-items:center; gap:8px;">
-    Speed
-    <input type="range" id="ttsRate" min="0.7" max="1.3" step="0.1" value="1.0">
-  </label>
-</div>
+   
         
         <div class="pills">
           <span class="pillSmall" id="studentPill"></span>
@@ -84,6 +80,9 @@
       <div class="imgRow">
         <div class="imgCol">
           <h3 class="imgTitle">Question</h3>
+          <div id="clickReadHint" class="hint" style="margin:6px 0;">
+  Click the card to read aloud.
+</div>
           <img id="questionImg" alt="Question screenshot">
         </div>
 
