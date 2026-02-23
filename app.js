@@ -930,3 +930,65 @@ function renderRecentNamesSuggestions(){
 document.addEventListener("DOMContentLoaded", () => {
   renderRecentNamesSuggestions();
 });
+
+// ---- Text-to-Speech (Web Speech API) ----
+let ttsVoices = [];
+
+function loadTtsVoices(){
+  if (!("speechSynthesis" in window)) return;
+  ttsVoices = window.speechSynthesis.getVoices() || [];
+}
+
+// Some browsers load voices async
+if ("speechSynthesis" in window) {
+  loadTtsVoices();
+  window.speechSynthesis.onvoiceschanged = loadTtsVoices;
+}
+
+function pickVoiceForLang(lang){
+  // lang: "en" or "sp"
+  const want = (lang === "sp") ? ["es", "es-"] : ["en", "en-"];
+
+  // Prefer a voice that matches language
+  const v = ttsVoices.find(v => want.some(p => (v.lang || "").toLowerCase().startsWith(p)));
+  return v || null;
+}
+
+function speak(text){
+  if (!text) return;
+  if (!("speechSynthesis" in window)) {
+    alert("Text-to-speech is not supported in this browser.");
+    return;
+  }
+
+  // Stop anything already speaking
+  window.speechSynthesis.cancel();
+
+  const u = new SpeechSynthesisUtterance(text);
+  const rate = Number(el("ttsRate")?.value || 1.0);
+  u.rate = Math.min(1.3, Math.max(0.7, rate));
+
+  const v = pickVoiceForLang(spanishMode ? "sp" : "en");
+  if (v) u.voice = v;
+
+  window.speechSynthesis.speak(u);
+}
+
+// Reads the current card question (and optionally answer)
+window.readCardNow = function readCardNow(includeAnswer=false){
+  if (!queue.length) return;
+  const c = queue[idx % queue.length];
+
+  // Read the text we have in cards.json
+  // (If you only have images and no text, see note below.)
+  let txt = c.text || c.q || c.id || "Card";
+
+  // If you want it to read the unit too:
+  txt = `Unit ${c.unit}. ${txt}`;
+
+  if (includeAnswer && (c.answerText || c.a)) {
+    txt += `. Answer: ${c.answerText || c.a}`;
+  }
+
+  speak(txt);
+};
