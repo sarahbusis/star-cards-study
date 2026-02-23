@@ -28,13 +28,15 @@ function el(id){
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  wireUI();
-  await loadCards(); 
-  buildUnitUI();
-  buildUnitCheckboxesUnchecked(); // units start UNCHECKED
-  showView("start");
+  try {
+    await loadCards();   // Load cards.json first
+    buildUnitUI();       // THEN build units
+    renderRecentNamesSuggestions?.(); // if you have this
+    setSpanishMode?.(spanishMode);    // sync language button
+  } catch (err) {
+    console.error("Initialization error:", err);
+  }
 });
-
 function wireUI(){
   el("modeStudent")?.addEventListener("click", () => showView("start"));
 
