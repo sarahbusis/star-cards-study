@@ -1,4 +1,6 @@
 
+const LANG_KEY = "star_lang_v1";
+let spanishMode = localStorage.getItem(LANG_KEY) === "sp";
 
 const BACKEND_URL = "https://script.google.com/macros/s/AKfycbyke09fUi9ChB1ewAUU4EzCDquAPC1RLRcCJcQwfzPfQF78G1giSrMKSNw2Ydwm6VxW/exec";
 const BACKEND_SECRET = "CHANGE_ME_TO_SOMETHING_LONG"; // must match SHARED_SECRET in Apps Script, or "" if disabled
@@ -38,7 +40,10 @@ function wireUI(){
   el("modeTeacher")?.addEventListener("click", async () => {
     const pin = prompt("Teacher PIN:");
     if (pin !== TEACHER_PIN) return alert("Incorrect PIN.");
-
+el("langToggleBtn")?.addEventListener("click", () => {
+  setSpanishMode(!spanishMode);
+});
+    
     showView("teacher");
 
     // Try backend first (JSONP)
@@ -147,20 +152,28 @@ renderRecentNamesSuggestions();
   ensureStudent(currentStudent);
 
   spanishMode = !!el("spanishToggle")?.checked;
-setSpanishMode(spanishMode); 
-  const checks = Array.from(el("unitGrid")?.querySelectorAll('input[type="checkbox"]') || []);
-  selectedUnits = new Set(checks.filter(c => c.checked).map(c => Number(c.value)));
-  if (selectedUnits.size === 0) return alert("Please select at least one unit to study.");
+function setSpanishMode(on){
+  spanishMode = !!on;
+localStorage.setItem(LANG_KEY, spanishMode ? "sp" : "en");
+  const btn = el("langToggleBtn");
+  if (btn){
+    btn.textContent = spanishMode ? "English" : "Español";
+  }
 
-  const shuffle = !!el("shuffleToggle")?.checked;
-  const onlyNeeds = !!el("onlyNeedsToggle")?.checked;
+  // Update any language pills if visible
+  el("langPill") && (
+    el("langPill").textContent = spanishMode
+      ? "Language: Español"
+      : "Language: English"
+  );
 
-  queue = buildQueue({ shuffle, onlyNeeds });
-  idx = 0;
+  // Stop reading if TTS exists
+  if (typeof ttsStop === "function") ttsStop();
 
-  showView("study");
-  renderCard();
-};
+  // Re-render active views so images swap instantly
+  try { renderCard(); } catch {}
+  try { renderStudentDashboard(); } catch {}
+}
 
 window.goToStart = function goToStart(){
   showView("start");
@@ -1025,7 +1038,8 @@ function loadTtsVoices(){
   if (!("speechSynthesis" in window)) return;
   ttsVoices = window.speechSynthesis.getVoices() || [];
 }
-
+setSpanishMode(spanishMode);
+  
 // Some browsers load voices async
 if ("speechSynthesis" in window) {
   loadTtsVoices();
