@@ -204,6 +204,7 @@ window.reveal = function reveal(){
 };
 
 window.advance = function advance(mode){
+  ttsStop();
   if (!queue.length) return;
 
   const c = queue[idx % queue.length];
@@ -311,7 +312,33 @@ function renderCard(){
 
   const q = el("questionImg");
   const a = el("answerImg");
+// Stop any speech when a new card renders
+ttsStop();
 
+// Click image to read aloud (toggle on/off)
+const qImg = el("questionImg");
+const aImg = el("answerImg");
+
+// Determine TTS text from cards.json fields
+const qText = spanishMode ? (c.textSp || c.text || "") : (c.text || "");
+const aText = spanishMode ? (c.answerTextSp || c.answerText || "") : (c.answerText || "");
+
+if (qImg){
+  qImg.style.cursor = "pointer";
+  qImg.onclick = () => {
+    const key = `${c.id}:Q:${spanishMode ? "sp" : "en"}`;
+    // Include unit for clarity
+    ttsSpeak(`Unit ${c.unit}. ${qText}`.trim(), key);
+  };
+}
+
+if (aImg){
+  aImg.style.cursor = "pointer";
+  aImg.onclick = () => {
+    const key = `${c.id}:A:${spanishMode ? "sp" : "en"}`;
+    ttsSpeak(`Answer. ${aText}`.trim(), key);
+  };
+}
 // Use image paths from cards.json (Spanish with fallback)
 if (q){
   q.onerror = null;
@@ -1047,3 +1074,57 @@ window.readCardNow = function readCardNow(includeAnswer=false){
 
   speak(txt);
 };
+
+// ---- TTS click-to-toggle helpers ----
+let __ttsActive = false;
+let __ttsLastKey = "";
+
+function ttsStop(){
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  __ttsActive = false;
+  __ttsLastKey = "";
+}
+
+function ttsSpeak(text, key){
+  if (!text) return;
+
+  if (!("speechSynthesis" in window)) {
+    alert("Text-to-speech is not supported in this browser.");
+    return;
+  }
+
+  // Toggle off if clicking the same thing while speaking
+  const currentlySpeaking = window.speechSynthesis.speaking || window.speechSynthesis.pending;
+  if (currentlySpeaking && __ttsActive && __ttsLastKey === key){
+    ttsStop();
+    return;
+  }
+
+  // Otherwise start speaking this new text
+  ttsStop();
+  __ttsActive = true;
+  __ttsLastKey = key;
+
+  const u = new SpeechSynthesisUtterance(text);
+
+  const rate = Number(el("ttsRate")?.value || 1.0);
+  u.rate = Math.min(1.3, Math.max(0.7, rate));
+
+  // Choose voice by language (re-uses your existing helper if present)
+  if (typeof pickVoiceForLang === "function") {
+    const v = pickVoiceForLang(spanishMode ? "sp" : "en");
+    if (v) u.voice = v;
+  }
+
+  u.onend = () => {
+    __ttsActive = false;
+    __ttsLastKey = "";
+  };
+  u.onerror = () => {
+    __ttsActive = false;
+    __ttsLastKey = "";
+  };
+
+  window.speechSynthesis.speak(u);
+}
