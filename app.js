@@ -184,51 +184,61 @@ window.advance = function advance(mode){
   if (!queue.length) return;
 
   const c = queue[idx % queue.length];
+
+  // Ensure student exists
+  ensureStudent(currentStudent);
   const stu = progress.students[currentStudent];
 
   const now = Date.now();
   const dt = (cardStartTs ? Math.max(0, now - cardStartTs) : 0);
 
-  if (!stu.byCard[c.id]) stu.byCard[c.id] = { got:0, close:0, miss:0, attempts:0, timeMs:0 };
+  // Ensure byCard entry
+  if (!stu.byCard[c.id]) {
+    stu.byCard[c.id] = { got:0, close:0, miss:0, attempts:0, timeMs:0 };
+  }
+  const s = stu.byCard[c.id];
 
-  // time + attempts always count
-  stu.byCard[c.id].attempts += 1;
-  stu.byCard[c.id].timeMs += dt;
-// Send to backend (all devices)
-function sendEventToBackend(evt){
-  if (!BACKEND_URL) return;
+  // Always count an attempt + time for any advance (including skip)
+  s.attempts += 1;
+  s.timeMs += dt;
 
-  const params = new URLSearchParams({
-    mode: "log",
-    student: evt.student,
-    cardId: evt.cardId,
-    unit: String(evt.unit ?? ""),
-    rating: evt.rating || "skip",
-    dtMs: String(evt.dtMs ?? 0),
-    lang: evt.lang || "en",
-    ua: navigator.userAgent
+  // Update rating counts only if it was a real rating
+  const rated = (mode === "got" || mode === "close" || mode === "miss");
+  if (rated) {
+    s[mode] += 1;
+
+    // Optional overall totals (if you use them elsewhere)
+    if (!stu.totals) stu.totals = { got:0, close:0, miss:0 };
+    stu.totals[mode] += 1;
+  }
+
+  // Log for weekly totals
+  if (!Array.isArray(stu.log)) stu.log = [];
+  stu.log.push({
+    ts: now,
+    cardId: c.id,
+    dtMs: dt,
+    rating: rated ? mode : "skip"
   });
+  if (stu.log.length > 5000) stu.log = stu.log.slice(stu.log.length - 5000);
 
-  // Pixel GET (super reliable cross-origin)
-  const img = new Image();
-  img.referrerPolicy = "no-referrer";
-  img.src = `${BACKEND_URL}?${params.toString()}`;
-}
+  // Save locally (this is what powers the student dashboard tiles)
   saveProgress(progress);
 
+  // Send to shared backend (all devices)
+  sendEventToBackend({
+    student: currentStudent,
+    cardId: c.id,
+    unit: c.unit,
+    rating: rated ? mode : "skip",
+    dtMs: dt,
+    lang: spanishMode ? "sp" : "en"
+  });
+
+  // Move forward
   idx++;
   renderCard();
-sendEventToBackend({
-  student: currentStudent,
-  cardId: c.id,
-  unit: c.unit,
-  rating: (mode === "got" || mode === "close" || mode === "miss") ? mode : "skip",
-  dtMs: dt,
-  lang: spanishMode ? "sp" : "en"
-});
-  
 };
-
 /* ---------- Queue building ---------- */
 function buildQueue({ shuffle, onlyNeeds }){
   let list = [...cards];
