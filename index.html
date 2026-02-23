@@ -117,43 +117,43 @@
 
     <!-- TEACHER -->
     <section id="teacherView" class="hidden">
-      <h2>Teacher dashboard (this device)</h2>
-      <p class="hint">
-        This dashboard reflects progress saved in this browser. Different devices won’t combine unless you export/import.
-      </p>
+  <h2>Teacher dashboard (all devices)</h2>
+  <p class="hint">
+    This dashboard pulls from the shared backend (Google Sheet). If the backend is offline, it will fall back to this device.
+  </p>
 
-      <div class="actions">
-        <button id="exportBtn" class="primary">Export JSON</button>
-        <label class="ghost fileLabel">
-          Import JSON
-          <input type="file" id="importFile" accept="application/json">
-        </label>
-        <button id="resetBtn" class="danger">Reset</button>
-      </div>
+  <div class="row">
+    <div class="panel">
+      <h3>Pick a student</h3>
+      <select id="studentSelect"></select>
+    </div>
+  </div>
 
-      <div class="row">
-        <div class="panel">
-          <h3>Pick a student</h3>
-          <select id="studentSelect"></select>
-        </div>
-      </div>
+  <div id="teacherSummary" class="dashSummary"></div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Card</th>
-            <th>Unit</th>
-            <th>✓</th>
-            <th>~</th>
-            <th>✗</th>
-            <th>Attempts</th>
-            <th>Total Time</th>
-            <th>Avg / Attempt</th>
-          </tr>
-        </thead>
-        <tbody id="teacherTable"></tbody>
-      </table>
-    </section>
+  <table>
+    <thead>
+      <tr>
+        <th>Card</th>
+        <th>Unit</th>
+        <th>Status</th>
+        <th>✓</th>
+        <th>~</th>
+        <th>✗</th>
+        <th>Attempts</th>
+        <th>Total Time</th>
+        <th>This Week</th>
+        <th>Avg / Attempt</th>
+      </tr>
+    </thead>
+    <tbody id="teacherTable"></tbody>
+  </table>
+
+  <p class="hint">
+    Note: Export/Import/Reset were for local-only storage; the shared backend is the Google Sheet.
+  </p>
+</section>
+  
 
   </main>
 
