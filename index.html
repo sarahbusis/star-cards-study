@@ -8,11 +8,37 @@
 </head>
 <body>
  <header class="header">
-  <h1>STAR Cards Study</h1>
-  <div class="header-actions">
-    <button id="modeStudent" class="secondary">Student</button>
-    <button id="modeTeacher" class="secondary">Teacher</button> 
-    <button id="langToggleBtn" class="secondary">Español</button>
+  <h1>5th Grade Math STAR Cards </h1>
+ <!-- Persistent Top Bar -->
+<div id="topBar" class="topBar">
+  <button id="modeStudent" class="modebtn" type="button">Student Mode</button>
+  <button id="modeTeacher" class="modebtn" type="button">Teacher Dashboard</button>
+
+  <span class="topBarSpacer"></span>
+/* Persistent top bar */
+.topBar{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  margin:12px 0 18px;
+  flex-wrap:wrap;
+}
+
+.topBarSpacer{
+  width:16px;
+}
+
+/* "Pressed" look for the active language */
+.modebtn.active{
+  outline: 2px solid rgba(255,255,255,0.35);
+  filter: brightness(1.1);
+}
+  <!-- Language toggle as a mode-style button -->
+  <button id="langToggleBtn" class="modebtn" type="button" title="Switch language">
+    Español
+  </button>
+</div>
   </div>
 </header>
 
