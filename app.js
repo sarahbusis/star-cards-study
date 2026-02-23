@@ -528,24 +528,42 @@ async function sendEventToBackend(evt) {
 
 async function fetchBackendSummary(pin){
   if (!BACKEND_URL) return null;
-  try {
-    const url = `${BACKEND_URL}?pin=${encodeURIComponent(pin)}&mode=summary`;
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (e) {
-    console.warn("Backend fetch failed:", e);
-    return null;
-  }
+
+  return new Promise((resolve) => {
+    const cbName = "__star_cb_" + Math.random().toString(36).slice(2);
+    const timeout = setTimeout(() => {
+      cleanup();
+      resolve(null);
+    }, 8000);
+
+    function cleanup(){
+      clearTimeout(timeout);
+      try { delete window[cbName]; } catch {}
+      script.remove();
+    }
+
+    window[cbName] = (data) => {
+      cleanup();
+      resolve(data);
+    };
+
+    const script = document.createElement("script");
+    const url = `${BACKEND_URL}?pin=${encodeURIComponent(pin)}&mode=summary&callback=${encodeURIComponent(cbName)}`;
+    script.src = url;
+    script.onerror = () => {
+      cleanup();
+      resolve(null);
+    };
+    document.body.appendChild(script);
+  });
 }
 
 async function sendEventToBackend(evt){
-  // Optional: you only need this if you want live syncing from all devices.
-  // If you already added it earlier, you can skip this duplicate.
   if (!BACKEND_URL) return;
   try {
     await fetch(BACKEND_URL, {
       method: "POST",
+      mode: "no-cors", // <-- IMPORTANT
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...evt,
@@ -557,7 +575,6 @@ async function sendEventToBackend(evt){
     console.warn("Backend send failed:", e);
   }
 }
-
 function renderTeacherFromBackend(studentsObj, pin){
   const sel = el("studentSelect");
   const body = el("teacherTable");
