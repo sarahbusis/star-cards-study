@@ -31,19 +31,46 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 function wireUI(){
   el("modeStudent")?.addEventListener("click", () => showView("start"));
-  el("modeTeacher")?.addEventListener("click", () => {
+
+  // Teacher mode now pulls from backend (all devices) with local fallback
+  el("modeTeacher")?.addEventListener("click", async () => {
     const pin = prompt("Teacher PIN:");
     if (pin !== TEACHER_PIN) return alert("Incorrect PIN.");
+
     showView("teacher");
+
+    // Try backend first
+    const backend = await fetchBackendSummary(pin);
+    if (backend && backend.ok && backend.students) {
+      window.__teacherDataSource = "backend";
+      window.__teacherBackendStudents = backend.students;
+      renderTeacherFromBackend(backend.students, pin);
+      return;
+    }
+
+    // Fallback to local if backend fails
+    window.__teacherDataSource = "local";
     renderTeacher();
+    alert("Backend not reachable — showing only this device’s data.");
   });
 
+  // Export/import/reset still operate on localStorage only (backend is a Google Sheet).
   el("exportBtn")?.addEventListener("click", exportJSON);
   el("importFile")?.addEventListener("change", importJSON);
   el("resetBtn")?.addEventListener("click", resetAll);
-  el("studentSelect")?.addEventListener("change", renderTeacherTableForSelectedStudent);
-}
 
+  // Student picker in teacher dashboard: backend or local
+  el("studentSelect")?.addEventListener("change", () => {
+    if (window.__teacherDataSource === "backend") {
+      const students = window.__teacherBackendStudents || {};
+      renderTeacherSummaryFromBackend(students);
+      renderTeacherTableForSelectedStudentFromBackend(students);
+    } else {
+      renderTeacherSummary();
+      renderTeacherTableForSelectedStudent();
+    }
+  });
+}
 async function loadCards(){
   try{
     const res = await fetch("./cards.json", { cache: "no-store" });
@@ -489,4 +516,191 @@ async function sendEventToBackend(evt) {
     // Don’t block studying if internet is flaky
     console.warn("Backend send failed:", e);
   }
+}
+
+async function fetchBackendSummary(pin){
+  if (!BACKEND_URL) return null;
+  try {
+    const url = `${BACKEND_URL}?pin=${encodeURIComponent(pin)}&mode=summary`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn("Backend fetch failed:", e);
+    return null;
+  }
+}
+
+async function sendEventToBackend(evt){
+  // Optional: you only need this if you want live syncing from all devices.
+  // If you already added it earlier, you can skip this duplicate.
+  if (!BACKEND_URL) return;
+  try {
+    await fetch(BACKEND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...evt,
+        secret: BACKEND_SECRET,
+        userAgent: navigator.userAgent
+      })
+    });
+  } catch (e) {
+    console.warn("Backend send failed:", e);
+  }
+}
+
+function renderTeacherFromBackend(studentsObj, pin){
+  const sel = el("studentSelect");
+  const body = el("teacherTable");
+  const summaryBox = el("teacherSummary");
+
+  if (!sel || !body || !summaryBox) return;
+
+  const names = Object.keys(studentsObj || {}).sort((a,b)=>a.localeCompare(b));
+  sel.innerHTML = "";
+  body.innerHTML = "";
+  summaryBox.innerHTML = "";
+
+  if (names.length === 0){
+    sel.appendChild(new Option("No students yet", ""));
+    summaryBox.innerHTML = `<div class="summaryChip">No backend data yet</div>`;
+    return;
+  }
+
+  names.forEach(n => sel.appendChild(new Option(n, n)));
+  sel.value = names[0];
+
+  renderTeacherSummaryFromBackend(studentsObj);
+  renderTeacherTableForSelectedStudentFromBackend(studentsObj);
+}
+
+function renderTeacherSummaryFromBackend(studentsObj){
+  const student = el("studentSelect")?.value;
+  const box = el("teacherSummary");
+  if (!box) return;
+
+  if (!student || !studentsObj[student]) {
+    box.innerHTML = "";
+    return;
+  }
+
+  const stu = studentsObj[student]; // { byCard, timeEver, timeWeek }
+  const byCard = stu.byCard || {};
+  const totalCards = cards.length;
+
+  let knownCards = 0;
+  let attemptedCards = 0;
+
+  // Determine known based on the SAME rule you wanted:
+  // got > close + miss on that card
+  for (const c of cards){
+    const s = byCard[c.id];
+    if (!s || (s.attempts || 0) === 0) continue;
+    attemptedCards++;
+    const got = s.got || 0;
+    const close = s.close || 0;
+    const miss = s.miss || 0;
+    if (got > (close + miss)) knownCards++;
+  }
+
+  const pctKnownAll = totalCards ? Math.round((knownCards / totalCards) * 100) : 0;
+  const pctKnownAttempted = attemptedCards ? Math.round((knownCards / attemptedCards) * 100) : 0;
+
+  const timeEver = stu.timeEver || 0;
+  const timeWeek = stu.timeWeek || 0;
+
+  box.innerHTML = `
+    <div class="summaryChip"><b>${escapeHtml(student)}</b></div>
+    <div class="summaryChip">Known (of all cards): <b>${pctKnownAll}%</b></div>
+    <div class="summaryChip">Known (of attempted): <b>${pctKnownAttempted}%</b></div>
+    <div class="summaryChip">Time ever: <b>${formatMs(timeEver)}</b></div>
+    <div class="summaryChip">Time this week: <b>${formatMs(timeWeek)}</b></div>
+    <div class="summaryChip">Source: <b>Backend (all devices)</b></div>
+  `;
+}
+
+function renderTeacherTableForSelectedStudentFromBackend(studentsObj){
+  const student = el("studentSelect")?.value;
+  const body = el("teacherTable");
+  if (!body) return;
+  body.innerHTML = "";
+
+  if (!student || !studentsObj[student]) return;
+
+  const stu = studentsObj[student];
+  const byCard = stu.byCard || {};
+
+  const sorted = [...cards].sort((a,b)=>{
+    if (a.unit !== b.unit) return a.unit - b.unit;
+    return a.id.localeCompare(b.id, undefined, { numeric:true });
+  });
+
+  for (const c of sorted){
+    const s = byCard[c.id] || { unit: c.unit, got:0, close:0, miss:0, attempts:0, timeMs:0, timeWeek:0 };
+    const avg = s.attempts ? (s.timeMs / s.attempts) : 0;
+
+    const { color, label, pillHtml } = statusForCardBackend(s);
+
+    const tr = document.createElement("tr");
+    tr.style.background = color;
+    tr.title = label;
+
+    tr.innerHTML = `
+      <td><b>${escapeHtml(c.id)}</b></td>
+      <td>${c.unit}</td>
+      <td>${pillHtml}</td>
+      <td>${s.got || 0}</td>
+      <td>${s.close || 0}</td>
+      <td>${s.miss || 0}</td>
+      <td>${s.attempts || 0}</td>
+      <td>${formatMs(s.timeMs || 0)}</td>
+      <td>${formatMs(s.timeWeek || 0)}</td>
+      <td>${formatMs(avg)}</td>
+    `;
+    body.appendChild(tr);
+  }
+}
+
+/* Status coloring/pill for backend rows (same logic) */
+function statusForCardBackend(s){
+  if (!s || (s.attempts || 0) === 0){
+    return {
+      color: "var(--gray)",
+      label: "Not attempted",
+      pillHtml: `<span class="statusPill">Not yet</span>`
+    };
+  }
+
+  const got = s.got || 0;
+  const close = s.close || 0;
+  const miss = s.miss || 0;
+
+  if (miss > close && miss > got){
+    return {
+      color: "var(--red)",
+      label: "Needs practice",
+      pillHtml: `<span class="statusPill" style="background:var(--red)">✗ Practice</span>`
+    };
+  }
+  if (close > got){
+    return {
+      color: "var(--yellow)",
+      label: "Close",
+      pillHtml: `<span class="statusPill" style="background:var(--yellow)">~ Close</span>`
+    };
+  }
+  if (got > 0){
+    return {
+      color: "var(--green)",
+      label: "Got it",
+      pillHtml: `<span class="statusPill" style="background:var(--green)">✓ Got</span>`
+    };
+  }
+
+  return {
+    color: "var(--gray)",
+    label: "Not attempted",
+    pillHtml: `<span class="statusPill">Not yet</span>`
+  };
 }
