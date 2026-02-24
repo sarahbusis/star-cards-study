@@ -1117,6 +1117,12 @@ function renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel }){
    ✅ WIRE EVERYTHING (matches your updated index.html)
    ===================================================== */
 function wireEverything(){
+
+   el("badgePopupCloseBtn")?.addEventListener("click", hideBadgePopup);
+el("badgePopup")?.addEventListener("click", (e) => {
+  if (e.target && e.target.id === "badgePopup") hideBadgePopup(); // click outside closes
+});
+   
   // Header buttons
   el("modeStudent")?.addEventListener("click", () => showView("start"));
   el("modeTeacher")?.addEventListener("click", openTeacherDashboard);
@@ -1140,10 +1146,7 @@ el("badgesBtn")?.addEventListener("click", openBadges);
 
 // Badges view
 el("badgesBackBtn")?.addEventListener("click", goToStart);
-el("badgePopupCloseBtn")?.addEventListener("click", hideBadgePopup);
-el("badgePopup")?.addEventListener("click", (e) => {
-  if (e.target && e.target.id === "badgePopup") hideBadgePopup(); // click outside closes
-});
+
    
   // Student dashboard
   el("dashBackBtn")?.addEventListener("click", goToStart);
