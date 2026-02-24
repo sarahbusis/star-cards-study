@@ -125,9 +125,17 @@
           <span class="pillSmall" id="dashLangPill"></span>
           <span class="pillSmall" id="dashWeekPill"></span>
         </div>
-        <div class="actions" style="margin:0;">
-          <button id="dashBackBtn" class="ghost" type="button">Back</button>
-        </div>
+        <div class="actions" style="margin:0; align-items:center; gap:10px;">
+  <!-- Toggle: My ratings / Quiz scores -->
+  <span class="hint" id="dashToggleLeft">My ratings</span>
+  <label class="switch" title="Switch dashboard">
+    <input id="dashToggle" type="checkbox">
+    <span class="slider"></span>
+  </label>
+  <span class="hint" id="dashToggleRight">Quiz scores</span>
+
+  <button id="dashBackBtn" class="ghost" type="button">Back</button>
+</div>
       </div>
 
       <h2>My Dashboard</h2>
@@ -150,9 +158,17 @@
       <span class="pillSmall" id="quizDashStudentPill"></span>
       <span class="pillSmall" id="quizDashLangPill"></span>
     </div>
-    <div class="actions" style="margin:0;">
-      <button id="quizDashBackBtn" class="ghost" type="button">Back</button>
-    </div>
+   <div class="actions" style="margin:0; align-items:center; gap:10px;">
+  <!-- Toggle: My ratings / Quiz scores -->
+  <span class="hint" id="quizDashToggleLeft">My ratings</span>
+  <label class="switch" title="Switch dashboard">
+    <input id="quizDashToggle" type="checkbox">
+    <span class="slider"></span>
+  </label>
+  <span class="hint" id="quizDashToggleRight">Quiz scores</span>
+
+  <button id="quizDashBackBtn" class="ghost" type="button">Back</button>
+</div>
     
   </div>
 
