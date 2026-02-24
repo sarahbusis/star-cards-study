@@ -100,6 +100,9 @@ async function loadCards(){
       textSp: c.textSp || "",
       answerTextSp: c.answerTextSp || ""
     }));
+    window.__cards = cards;
+console.log("[cards] loaded", cards.length, "cards");
+    
   }catch(err){
     console.error(err);
     alert("Could not load cards.json. Make sure it exists in the repo root.");
@@ -116,31 +119,30 @@ function showView(which){
 
 /* ---------- Units UI ---------- */
 function buildUnitUI(){
-  const grid = el("unitGrid");
-  if (!grid) return;
+  const grid = document.getElementById("unitGrid");
+  if (!grid){
+    console.warn("[units] #unitGrid not found");
+    return;
+  }
 
-  // Build list of units that actually exist in cards.json
-  const units = [...new Set((cards || []).map(c => Number(c.unit)).filter(n => Number.isFinite(n)))]
+  const units = [...new Set((window.__cards || cards || []).map(c => Number(c.unit)).filter(n => Number.isFinite(n)))]
     .sort((a,b) => a-b);
+
+  console.log("[units] building UI for units:", units);
 
   grid.innerHTML = "";
 
   if (units.length === 0){
-    grid.innerHTML = `<div class="hint">No cards loaded yet.</div>`;
+    grid.innerHTML = `<div class="hint">No units found. (Cards may not be loaded yet.)</div>`;
     return;
   }
 
   for (const u of units){
-    const id = `unit_${u}`;
-
     const label = document.createElement("label");
-    label.className = "unitChip";
+    label.className = "pill"; // uses your existing styling
+    label.style.margin = "6px";
 
-    label.innerHTML = `
-      <input type="checkbox" value="${u}" id="${id}">
-      <span>Unit ${u}</span>
-    `;
-
+    label.innerHTML = `<input type="checkbox" value="${u}"> Unit ${u}`;
     grid.appendChild(label);
   }
 }
@@ -1233,4 +1235,14 @@ function wireTtsRatePersistence(){
 
 document.addEventListener("DOMContentLoaded", () => {
   wireTtsRatePersistence();
+});
+
+  document.addEventListener("DOMContentLoaded", async () => {
+  try{
+    await loadCards();
+    buildUnitUI();
+    console.log("[init] done");
+  } catch (e){
+    console.error("[init] failed", e);
+  }
 });
