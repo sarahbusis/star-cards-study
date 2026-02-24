@@ -24,7 +24,7 @@ let selectedUnits = new Set();
 let queue = [];
 let idx = 0;
 
-let quizMode = false; // toggled by Quiz button
+
 
 let cardStartTs = null;
 
@@ -37,11 +37,11 @@ function el(id){
 // =====================================================
 
 // Global flag
-let quizMode = false;
+window.quizMode = window.quizMode ?? false;
 
 // --- Quiz toggle button ---
 function openQuizMode(){
-  quizMode = !quizMode;
+  window.quizMode = !window.quizMode;
 
   const btn = el("quizInStudyBtn");
   if (btn){
@@ -366,7 +366,7 @@ window.reveal = function reveal(){
   revealArea.classList.remove("hidden");
 
   // Quiz grading (only if quizMode ON)
-  if (quizMode){
+  if (window.quizMode){
     const typed = el("answerBox")?.value || "";
     const res = gradeAnswerForCard(c, typed, !!spanishMode);
     setQuizFeedback(res.level, res.message);
