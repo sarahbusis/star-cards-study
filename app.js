@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     await loadCards();   // Load cards.json first
     buildUnitUI();       // THEN build units
+    wireStartViewButtons();
     renderRecentNamesSuggestions?.(); // if you have this
     setSpanishMode?.(spanishMode);    // sync language button
   } catch (err) {
@@ -1241,8 +1242,14 @@ document.addEventListener("DOMContentLoaded", () => {
   try{
     await loadCards();
     buildUnitUI();
+     wireStartViewButtons();
     console.log("[init] done");
   } catch (e){
     console.error("[init] failed", e);
   }
 });
+
+  function wireStartViewButtons(){
+  el("startBtn")?.addEventListener("click", () => start());
+  el("studentDashBtn")?.addEventListener("click", () => openStudentDashboard());
+}
