@@ -907,13 +907,13 @@ function escapeHtml(str){
 }
 /* ---------- Badges (minutes studied) ---------- */
 const BADGES = [
-  { minutes: 5,   name: "Warm-Up",        emoji: "🔥" },
-  { minutes: 15,  name: "Getting Started",emoji: "⭐" },
-  { minutes: 30,  name: "Half-Hour Hero", emoji: "🦸" },
-  { minutes: 60,  name: "One-Hour Champ", emoji: "🏆" },
-  { minutes: 120, name: "Study Streaker", emoji: "⚡" },
-  { minutes: 240, name: "Focused Fox",    emoji: "🦊" },
-  { minutes: 500, name: "STAR Master",    emoji: "👑" },
+  { minutes: 5,   cards: 3,   name: "Warm-Up",         emoji: "🔥" },
+  { minutes: 15,  cards: 8,   name: "Getting Started", emoji: "⭐" },
+  { minutes: 30,  cards: 15,  name: "Half-Hour Hero",  emoji: "🦸" },
+  { minutes: 60,  cards: 25,  name: "One-Hour Champ",  emoji: "🏆" },
+  { minutes: 120, cards: 40,  name: "Study Streaker",  emoji: "⚡" },
+  { minutes: 240, cards: 60,  name: "Focused Fox",     emoji: "🦊" },
+  { minutes: 500, cards: 90,  name: "STAR Master",     emoji: "👑" },
 ];
 
 function totalMsLocalEverForStudent(stu){
@@ -929,9 +929,15 @@ function formatMinutesFromMs(ms){
   const mins = Math.floor((Number(ms) || 0) / 60000);
   return `${mins} min`;
 }
-
+function distinctCardsLocalAttempted(stu){
+  if (!stu || !stu.byCard) return 0;
+  let count = 0;
+  for (const id in stu.byCard){
+    if ((stu.byCard[id]?.attempts || 0) > 0) count++;
+  }
+  return count;
+}
 async function openBadges(){
-  // Ensure we have a student
   let name = (currentStudent || "").trim();
   if (!name) name = (el("studentName")?.value || "").trim();
   if (!name) return alert("Enter your name first.");
@@ -941,68 +947,89 @@ async function openBadges(){
   renderRecentNamesSuggestions();
   ensureStudent(currentStudent);
 
-  // Try backend totals (all devices)
+  // Local fallback
+  const localStu = progress.students[currentStudent];
   let sourceLabel = "This device";
-  let timeEverMs = totalMsLocalEverForStudent(progress.students[currentStudent]);
+  let timeEverMs = totalMsLocalEverForStudent(localStu);
+  let cardsAttempted = distinctCardsLocalAttempted(localStu);
 
+  // Backend preferred (all devices)
   try{
     const backendStu = await fetchBackendStudent(currentStudent);
     if (backendStu && backendStu.ok){
-      // backend includes timeEver at the student level in our backend design
-      if (typeof backendStu.timeEver === "number"){
+      window.__studentBackend = backendStu;
+
+      if (typeof backendStu.timeEver === "number") {
         timeEverMs = backendStu.timeEver;
         sourceLabel = "All devices";
       }
-      // keep it cached for other pages too
-      window.__studentBackend = backendStu;
+      if (typeof backendStu.cardsAttempted === "number") {
+        cardsAttempted = backendStu.cardsAttempted;
+        sourceLabel = "All devices";
+      } else if (backendStu.byCard && typeof backendStu.byCard === "object"){
+        // derive from backend byCard if not explicitly provided
+        cardsAttempted = Object.values(backendStu.byCard).filter(s => (s.attempts || 0) > 0).length;
+        sourceLabel = "All devices";
+      }
     }
   } catch (e){
-    // ignore; fall back to local
+    // ignore; use local
   }
 
-  renderBadgesPage(timeEverMs, sourceLabel);
+  renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel });
   showView("badges");
 }
-
-function renderBadgesPage(timeEverMs, sourceLabel){
+function renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel }){
   const totalMin = Math.floor((Number(timeEverMs) || 0) / 60000);
+  const cardsN = Number(cardsAttempted) || 0;
 
   el("badgesStudentPill") && (el("badgesStudentPill").textContent = `Student: ${currentStudent}`);
-  el("badgesTotalPill") && (el("badgesTotalPill").textContent = `Total: ${totalMin} min`);
+  el("badgesTotalPill") && (el("badgesTotalPill").textContent = `Total: ${totalMin} min • ${cardsN} cards`);
   el("badgesSourcePill") && (el("badgesSourcePill").textContent = `Source: ${sourceLabel}`);
 
-  // Earned badges
-  const earned = BADGES.filter(b => totalMin >= b.minutes);
-  const next = BADGES.find(b => totalMin < b.minutes) || null;
+  const earned = BADGES.filter(b => totalMin >= b.minutes && cardsN >= b.cards);
+  const next = BADGES.find(b => !(totalMin >= b.minutes && cardsN >= b.cards)) || null;
 
-  // Next badge hint
   const hint = el("badgesNextHint");
   if (hint){
     if (!next){
       hint.textContent = "You earned every badge! 🥳";
     } else {
-      const left = next.minutes - totalMin;
-      hint.textContent = `Next badge: ${next.emoji} ${next.name} at ${next.minutes} min — only ${left} min to go!`;
+      const minLeft = Math.max(0, next.minutes - totalMin);
+      const cardsLeft = Math.max(0, next.cards - cardsN);
+
+      // Friendly combined message
+      if (minLeft > 0 && cardsLeft > 0){
+        hint.textContent =
+          `Next badge: ${next.emoji} ${next.name} — ` +
+          `${minLeft} more min AND ${cardsLeft} more cards to go!`;
+      } else if (minLeft > 0){
+        hint.textContent =
+          `Next badge: ${next.emoji} ${next.name} — ` +
+          `${minLeft} more minutes to go!`;
+      } else {
+        hint.textContent =
+          `Next badge: ${next.emoji} ${next.name} — ` +
+          `${cardsLeft} more cards to go!`;
+      }
     }
   }
 
-  // Summary chips
   const sum = el("badgesSummary");
   if (sum){
     sum.innerHTML = `
       <div class="summaryChip">Badges earned: <b>${earned.length}</b> / ${BADGES.length}</div>
       <div class="summaryChip">Minutes studied: <b>${totalMin}</b></div>
+      <div class="summaryChip">Cards attempted: <b>${cardsN}</b></div>
     `;
   }
 
-  // Badge grid
   const grid = el("badgesGrid");
   if (!grid) return;
-
   grid.innerHTML = "";
 
   for (const b of BADGES){
-    const got = totalMin >= b.minutes;
+    const got = (totalMin >= b.minutes && cardsN >= b.cards);
 
     const tile = document.createElement("div");
     tile.className = "dashCard";
@@ -1012,7 +1039,7 @@ function renderBadgesPage(timeEverMs, sourceLabel){
     tile.innerHTML = `
       <b style="font-size:22px;">${b.emoji}</b>
       <div style="font-weight:700;">${escapeHtml(b.name)}</div>
-      <small>${b.minutes} min</small>
+      <small>Need: ${b.minutes} min • ${b.cards} cards</small>
       <small>${got ? "Earned!" : "Not yet"}</small>
     `;
 
