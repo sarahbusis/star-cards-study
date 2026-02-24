@@ -1022,7 +1022,7 @@ async function openBadges(){
   let name = (currentStudent || "").trim();
   if (!name) name = (el("studentName")?.value || "").trim();
   if (!name) return alert("Enter your name first.");
- console.log("[badges] openBadges totals", { timeEverMs, cardsAttempted, sourceLabel });
+ 
   currentStudent = name;
   addRecentName(currentStudent);
   renderRecentNamesSuggestions();
@@ -1064,7 +1064,7 @@ async function openBadges(){
     // ignore, keep local
   }
 
-  
+  console.log("[badges] openBadges totals", { timeEverMs, cardsAttempted, sourceLabel });
   renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel });
   showView("badges");
 }
