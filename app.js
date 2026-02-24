@@ -1,14 +1,20 @@
+/* =========================
+   STAR Cards Study — app.js
+   (clean drop-in version)
+   ========================= */
 
+/* ---------- Config ---------- */
 const LANG_KEY = "star_lang_v1";
 let spanishMode = localStorage.getItem(LANG_KEY) === "sp";
 
 const BACKEND_URL = "https://script.google.com/macros/s/AKfycbyke09fUi9ChB1ewAUU4EzCDquAPC1RLRcCJcQwfzPfQF78G1giSrMKSNw2Ydwm6VxW/exec";
 const BACKEND_SECRET = "CHANGE_ME_TO_SOMETHING_LONG"; // must match SHARED_SECRET in Apps Script, or "" if disabled
 const STUDENT_CODE = "spark2026"; // must match Code.gs
-
-const STORAGE_KEY = "star_screenshot_progress_v3";
 const TEACHER_PIN = "2026";
 
+const STORAGE_KEY = "star_screenshot_progress_v3";
+
+/* ---------- State ---------- */
 let cards = [];
 let progress = loadProgress();
 
@@ -18,99 +24,13 @@ let queue = [];
 let idx = 0;
 
 let cardStartTs = null;
-let spanishMode = false;
 
-// Safe getter
+/* ---------- DOM helper ---------- */
 function el(id){
-  const node = document.getElementById(id);
-  if (!node) console.warn(`[STAR] Missing element id="${id}"`);
-  return node;
+  return document.getElementById(id);
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    await loadCards();   // Load cards.json first
-    buildUnitUI();       // THEN build units
-    wireStartViewButtons();
-    renderRecentNamesSuggestions?.(); // if you have this
-    setSpanishMode?.(spanishMode);    // sync language button
-  } catch (err) {
-    console.error("Initialization error:", err);
-  }
-});
-function wireUI(){
-  el("modeStudent")?.addEventListener("click", () => showView("start"));
-
-  el("modeTeacher")?.addEventListener("click", async () => {
-    const pin = prompt("Teacher PIN:");
-    if (pin !== TEACHER_PIN) return alert("Incorrect PIN.");
-el("langToggleBtn")?.addEventListener("click", () => {
-  setSpanishMode(!spanishMode);
-});
-    
-    showView("teacher");
-
-    // Try backend first (JSONP)
-    const backend = await fetchBackendSummary(pin);
-    if (backend && backend.ok && backend.students) {
-      window.__teacherDataSource = "backend";
-      window.__teacherBackendStudents = backend.students;
-      renderTeacherFromBackend(backend.students);
-      return;
-    }
-
-    // Fallback to local if backend fails
-    window.__teacherDataSource = "local";
-    renderTeacher();
-    alert("Backend not reachable — showing only this device’s data.");
-  });
-
-  el("studentSelect")?.addEventListener("change", () => {
-    if (window.__teacherDataSource === "backend") {
-      const students = window.__teacherBackendStudents || {};
-      renderTeacherSummaryFromBackend(students);
-      renderTeacherTableForSelectedStudentFromBackend(students);
-    } else {
-      renderTeacherSummary();
-      renderTeacherTableForSelectedStudent();
-    }
-  });
-}
-async function loadCards(){
-  try{
-    const res = await fetch("./cards.json", { cache: "no-store" });
-    if (!res.ok) throw new Error(`cards.json not found (HTTP ${res.status})`);
-
-    const json = await res.json();
-
-    // Support BOTH formats:
-    // 1) Old: { cards: [...] }
-    // 2) New: [ ... ]
-    const arr = Array.isArray(json) ? json : (json.cards || []);
-
-    cards = arr.map(c => ({
-      ...c,
-      unit: Number(c.unit),
-      // Optional: default image paths if not provided
-      q: c.q || `assets/${c.id}Q.png`,
-      a: c.a || `assets/${c.id}A.png`,
-      qsp: c.qsp || `assets/${c.id}Qsp.png`,
-      asp: c.asp || `assets/${c.id}Asp.png`,
-      text: c.text || "",
-      answerText: c.answerText || "",
-      textSp: c.textSp || "",
-      answerTextSp: c.answerTextSp || ""
-    }));
-    window.__cards = cards;
-console.log("[cards] loaded", cards.length, "cards");
-    
-  }catch(err){
-    console.error(err);
-    alert("Could not load cards.json. Make sure it exists in the repo root.");
-    cards = [];
-  }
-}
-
+/* ---------- Views ---------- */
 function showView(which){
   el("startView")?.classList.toggle("hidden", which !== "start");
   el("studyView")?.classList.toggle("hidden", which !== "study");
@@ -118,186 +38,162 @@ function showView(which){
   el("teacherView")?.classList.toggle("hidden", which !== "teacher");
 }
 
+/* ---------- Language toggle ---------- */
+function setSpanishMode(on){
+  spanishMode = !!on;
+  localStorage.setItem(LANG_KEY, spanishMode ? "sp" : "en");
+
+  // Button label flips so kids know how to switch back
+  const btn = el("langToggleBtn");
+  if (btn) btn.textContent = spanishMode ? "English" : "Español";
+
+  // Pills if present
+  if (el("langPill")) el("langPill").textContent = spanishMode ? "Language: Español" : "Language: English";
+  if (el("dashLangPill")) el("dashLangPill").textContent = spanishMode ? "Language: Español" : "Language: English";
+
+  // Update read hint if present
+  const hint = el("clickReadHint");
+  if (hint) hint.textContent = spanishMode ? "Haz clic para leer en voz alta." : "Click the card to read aloud.";
+
+  // Stop any TTS and re-render if needed
+  ttsStop();
+  try { renderCard(); } catch {}
+  try { renderStudentDashboard(); } catch {}
+}
+
+/* ---------- Cards loading ---------- */
+async function loadCards(){
+  const res = await fetch("./cards.json", { cache: "no-store" });
+  if (!res.ok) throw new Error(`cards.json not found (HTTP ${res.status})`);
+
+  const json = await res.json();
+  const arr = Array.isArray(json) ? json : (json.cards || []);
+
+  cards = arr.map(c => ({
+    ...c,
+    unit: Number(c.unit),
+    q: c.q || `assets/${c.id}Q.png`,
+    a: c.a || `assets/${c.id}A.png`,
+    qsp: c.qsp || `assets/${c.id}Qsp.png`,
+    asp: c.asp || `assets/${c.id}Asp.png`,
+    text: c.text || "",
+    answerText: c.answerText || "",
+    textSp: c.textSp || "",
+    answerTextSp: c.answerTextSp || ""
+  }));
+
+  window.__cards = cards; // helpful for debugging
+  console.log("[cards] loaded", cards.length);
+}
+
 /* ---------- Units UI ---------- */
 function buildUnitUI(){
-  const grid = document.getElementById("unitGrid");
-  if (!grid){
-    console.warn("[units] #unitGrid not found");
-    return;
-  }
+  const grid = el("unitGrid");
+  if (!grid) return;
 
-  const units = [...new Set((window.__cards || cards || []).map(c => Number(c.unit)).filter(n => Number.isFinite(n)))]
+  const units = [...new Set(cards.map(c => Number(c.unit)).filter(n => Number.isFinite(n)))]
     .sort((a,b) => a-b);
-
-  console.log("[units] building UI for units:", units);
 
   grid.innerHTML = "";
 
-  if (units.length === 0){
-    grid.innerHTML = `<div class="hint">No units found. (Cards may not be loaded yet.)</div>`;
+  if (!units.length){
+    grid.innerHTML = `<div class="hint">No units found.</div>`;
     return;
   }
 
   for (const u of units){
     const label = document.createElement("label");
-    label.className = "pill"; // uses your existing styling
+    // Use your existing "pill" styling so it fits your site
+    label.className = "pill";
     label.style.margin = "6px";
-
     label.innerHTML = `<input type="checkbox" value="${u}"> Unit ${u}`;
     grid.appendChild(label);
   }
 }
 
-function buildUnitCheckboxesUnchecked(){
+function readSelectedUnitsFromUI(){
   const grid = el("unitGrid");
-  if (!grid) return;
-  grid.innerHTML = "";
-  for (let u = 1; u <= 7; u++){
-    const chip = document.createElement("label");
-    chip.className = "unitChip";
-    chip.innerHTML = `<input type="checkbox" value="${u}"> Unit ${u}`;
-    grid.appendChild(chip);
-  }
+  const set = new Set();
+  if (!grid) return set;
+
+  grid.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    if (cb.checked) set.add(Number(cb.value));
+  });
+  return set;
 }
 
-/* ---------- Image paths (English vs Spanish) ---------- */
-function imgPath(id, type){
-  // type is "Q" or "A"
-
-  if (!spanishMode){
-    return `assets/${id}${type}.png`;
-  }
-
-  // Try Spanish version first
-  const spPath = `assets/${id}${type}sp.png`;
-  const enPath = `assets/${id}${type}.png`;
-
-  // We can’t truly check existence synchronously,
-  // so rely on browser error fallback
-  return spPath;
-}
-/* ---------- Public functions (inline onclick) ---------- */
-window.start = function start(){
+/* ---------- Start / Study flow ---------- */
+function start(){
   const name = (el("studentName")?.value || "").trim();
   if (!name) return alert("Please enter your name.");
 
   currentStudent = name;
   addRecentName(currentStudent);
-renderRecentNamesSuggestions();
-  window.currentStudent = currentStudent; // <-- make visible for debugging + consistency
+  renderRecentNamesSuggestions();
   ensureStudent(currentStudent);
 
- 
-function setSpanishMode(on){
-  spanishMode = !!on;
-
-  const btn = el("langToggleBtn");
-  if (btn){
-    // When Spanish is ON, button says “English” so kids know how to switch back
-    btn.textContent = spanishMode ? "English" : "Español";
+  selectedUnits = readSelectedUnitsFromUI();
+  if (!selectedUnits.size){
+    return alert("Select at least one unit.");
   }
 
-  // Update language pill if present
-  el("langPill") && (
-    el("langPill").textContent = spanishMode ? "Language: Español" : "Language: English"
-  );
+  const shuffle = !!el("shuffleToggle")?.checked;
+  const onlyNeeds = !!el("onlyNeedsToggle")?.checked;
 
-  // Stop reading if TTS exists
-  if (typeof ttsStop === "function") ttsStop();
+  queue = buildQueue({ shuffle, onlyNeeds });
+  idx = 0;
 
-  // Re-render current views so images swap immediately
-  try { renderCard(); } catch {}
-  try { renderStudentDashboard(); } catch {}
-}
-
-window.goToStart = function goToStart(){
-  showView("start");
-  resetStudyUI();
-};
-
-window.openStudentDashboard = async function openStudentDashboard(){
-  let name = (currentStudent || "").trim();
-  if (!name) name = (el("studentName")?.value || "").trim();
-  if (!name) return alert("Enter your name first.");
-
-  currentStudent = name;
-  addRecentName(currentStudent);
-renderRecentNamesSuggestions();
-  window.currentStudent = currentStudent;
-  ensureStudent(currentStudent);
-
-  spanishMode = !!el("spanishToggle")?.checked;
-
-  try{
-    // Pull backend totals (all devices) and store them for dashboard rendering
-    const backendStu = await fetchBackendStudent(currentStudent);
-    window.__studentBackend = (backendStu && backendStu.ok) ? backendStu : null;
-
-    renderStudentDashboard();   // we’ll update this next to prefer backend
-    showView("studentDash");
-  } catch (err){
-    console.error("Student dashboard error:", err);
-    alert("Student dashboard hit an error. Open Console to see details.");
-  }
-};
-window.reveal = function reveal(){
-  const answerCol = el("answerCol");
-  const revealArea = el("revealArea");
-  if (!answerCol || !revealArea){
-    alert('Missing "answerCol" or "revealArea" in index.html.');
+  if (!queue.length){
+    showView("study");
+    renderCard(); // will show "No cards found..."
     return;
   }
-  answerCol.classList.remove("hidden");
-  revealArea.classList.remove("hidden");
-};
 
-window.advance = function advance(mode){
+  showView("study");
+  renderCard();
+}
+
+function goToStart(){
+  showView("start");
+  resetStudyUI();
+  ttsStop();
+}
+
+function reveal(){
+  el("answerCol")?.classList.remove("hidden");
+  el("revealArea")?.classList.remove("hidden");
+}
+
+function advance(mode){
   ttsStop();
   if (!queue.length) return;
 
   const c = queue[idx % queue.length];
 
-  // Ensure student exists
   ensureStudent(currentStudent);
   const stu = progress.students[currentStudent];
 
   const now = Date.now();
   const dt = (cardStartTs ? Math.max(0, now - cardStartTs) : 0);
 
-  // Ensure byCard entry
-  if (!stu.byCard[c.id]) {
-    stu.byCard[c.id] = { got:0, close:0, miss:0, attempts:0, timeMs:0 };
-  }
+  if (!stu.byCard[c.id]) stu.byCard[c.id] = { got:0, close:0, miss:0, attempts:0, timeMs:0 };
   const s = stu.byCard[c.id];
 
-  // Always count an attempt + time for any advance (including skip)
+  // Count attempt + time always
   s.attempts += 1;
   s.timeMs += dt;
 
-  // Update rating counts only if it was a real rating
   const rated = (mode === "got" || mode === "close" || mode === "miss");
-  if (rated) {
-    s[mode] += 1;
+  if (rated) s[mode] += 1;
 
-    // Optional overall totals (if you use them elsewhere)
-    if (!stu.totals) stu.totals = { got:0, close:0, miss:0 };
-    stu.totals[mode] += 1;
-  }
-
-  // Log for weekly totals
+  // Log for weekly totals (local)
   if (!Array.isArray(stu.log)) stu.log = [];
-  stu.log.push({
-    ts: now,
-    cardId: c.id,
-    dtMs: dt,
-    rating: rated ? mode : "skip"
-  });
-  if (stu.log.length > 5000) stu.log = stu.log.slice(stu.log.length - 5000);
+  stu.log.push({ ts: now, cardId: c.id, dtMs: dt, rating: rated ? mode : "skip" });
+  if (stu.log.length > 5000) stu.log = stu.log.slice(-5000);
 
-  // Save locally (this is what powers the student dashboard tiles)
   saveProgress(progress);
 
-  // Send to shared backend (all devices)
+  // Send to backend (all devices)
   sendEventToBackend({
     student: currentStudent,
     cardId: c.id,
@@ -307,24 +203,24 @@ window.advance = function advance(mode){
     lang: spanishMode ? "sp" : "en"
   });
 
-  // Move forward
   idx++;
   renderCard();
-};
+}
+
 /* ---------- Queue building ---------- */
 function buildQueue({ shuffle, onlyNeeds }){
   let list = [...cards];
 
-  // unit filter
+  // Filter by units
   list = list.filter(c => selectedUnits.has(Number(c.unit)));
 
-  // onlyNeeds filter
+  // Filter by needs practice
   if (onlyNeeds){
-    const byCard = progress.students[currentStudent].byCard || {};
+    const byCard = progress.students[currentStudent]?.byCard || {};
     list = list.filter(c => {
       const s = byCard[c.id];
       if (!s) return true;
-      return (s.miss + s.close) > s.got;
+      return (Number(s.miss || 0) + Number(s.close || 0)) > Number(s.got || 0);
     });
   }
 
@@ -332,21 +228,21 @@ function buildQueue({ shuffle, onlyNeeds }){
   return list;
 }
 
-/* ---------- Study rendering ---------- */
+/* ---------- Render study card ---------- */
 function renderCard(){
   const answerCol = el("answerCol");
   const revealArea = el("revealArea");
   const answerBox = el("answerBox");
 
-  el("studentPill") && (el("studentPill").textContent = `Student: ${currentStudent}`);
-  el("unitPill") && (el("unitPill").textContent = `Units: ${[...selectedUnits].sort().join(", ")}`);
-  el("langPill") && (el("langPill").textContent = spanishMode ? "Language: Español" : "Language: English");
+  if (el("studentPill")) el("studentPill").textContent = `Student: ${currentStudent}`;
+  if (el("unitPill")) el("unitPill").textContent = `Units: ${[...selectedUnits].sort().join(", ")}`;
+  if (el("langPill")) el("langPill").textContent = spanishMode ? "Language: Español" : "Language: English";
 
   if (!queue.length){
-    el("questionImg") && (el("questionImg").src = "");
-    el("answerImg") && (el("answerImg").src = "");
-    el("progressPill") && (el("progressPill").textContent = "");
-    el("cardStats") && (el("cardStats").textContent = "No cards found for these filters.");
+    if (el("questionImg")) el("questionImg").src = "";
+    if (el("answerImg")) el("answerImg").src = "";
+    if (el("progressPill")) el("progressPill").textContent = "";
+    if (el("cardStats")) el("cardStats").textContent = "No cards found for these filters.";
     revealArea?.classList.add("hidden");
     answerCol?.classList.add("hidden");
     return;
@@ -354,131 +250,121 @@ function renderCard(){
 
   const c = queue[idx % queue.length];
 
+  if (el("progressPill")){
+    el("progressPill").textContent = `Card ${(idx % queue.length) + 1} / ${queue.length} (Unit ${c.unit})`;
+  }
+
+  // Update hint language
   const hint = el("clickReadHint");
-if (hint){
-  hint.textContent = spanishMode ? "Haz clic para leer en voz alta." : "Click the card to read aloud.";
-}
+  if (hint) hint.textContent = spanishMode ? "Haz clic para leer en voz alta." : "Click the card to read aloud.";
 
-  el("progressPill") && (el("progressPill").textContent =
-    `Card ${ (idx % queue.length) + 1 } / ${queue.length} (Unit ${c.unit})`
-  );
+  // Stop speech when new card shows
+  ttsStop();
 
+  // Images with Spanish fallback to English
   const q = el("questionImg");
   const a = el("answerImg");
-// Stop any speech when a new card renders
-ttsStop();
 
-// Click image to read aloud (toggle on/off)
-const qImg = el("questionImg");
-const aImg = el("answerImg");
-
-// Determine TTS text from cards.json fields
-const qText = spanishMode ? (c.textSp || c.text || "") : (c.text || "");
-const aText = spanishMode ? (c.answerTextSp || c.answerText || "") : (c.answerText || "");
-
-if (qImg){
-  qImg.style.cursor = "pointer";
-  qImg.onclick = () => {
-    const key = `${c.id}:Q:${spanishMode ? "sp" : "en"}`;
-    // Include unit for clarity
-    ttsSpeak(`Unit ${c.unit}. ${qText}`.trim(), key);
-  };
-}
-
-if (aImg){
-  aImg.style.cursor = "pointer";
-  aImg.onclick = () => {
-    const key = `${c.id}:A:${spanishMode ? "sp" : "en"}`;
-    ttsSpeak(`Answer. ${aText}`.trim(), key);
-  };
-}
-// Use image paths from cards.json (Spanish with fallback)
-if (q){
-  q.onerror = null;
-  q.src = spanishMode ? (c.qsp || c.q) : (c.q || "");
-  q.onerror = () => {
-    if (spanishMode && c.q) {
-      q.onerror = null;
-      q.src = c.q; // fallback to English
-    }
-  };
-}
-
-if (a){
-  a.onerror = null;
-  a.src = spanishMode ? (c.asp || c.a) : (c.a || "");
-  a.onerror = () => {
-    if (spanishMode && c.a) {
-      a.onerror = null;
-      a.src = c.a; // fallback to English
-    }
-  };
-}
-
-  // Fallback to English if Spanish image missing
-if (q){
-  q.onerror = () => {
+  if (q){
     q.onerror = null;
-    q.src = `assets/${c.id}Q.png`;
-  };
-}
+    q.src = spanishMode ? (c.qsp || c.q) : (c.q || "");
+    q.onerror = () => {
+      if (spanishMode && c.q){
+        q.onerror = null;
+        q.src = c.q;
+      }
+    };
+  }
 
-if (a){
-  a.onerror = () => {
+  if (a){
     a.onerror = null;
-    a.src = `assets/${c.id}A.png`;
-  };
-}
-  
-  // clear typed answer
+    a.src = spanishMode ? (c.asp || c.a) : (c.a || "");
+    a.onerror = () => {
+      if (spanishMode && c.a){
+        a.onerror = null;
+        a.src = c.a;
+      }
+    };
+  }
+
+  // Clear typed answer
   if (answerBox) answerBox.value = "";
 
-  // hide answer + rating until check
+  // Hide answer + rating
   revealArea?.classList.add("hidden");
   answerCol?.classList.add("hidden");
 
+  // Card stats (local)
+  ensureStudent(currentStudent);
   const s = progress.students[currentStudent].byCard[c.id] || { got:0, close:0, miss:0, attempts:0, timeMs:0 };
-  el("cardStats") && (el("cardStats").textContent =
-    `This card — ✓ ${s.got}  ~ ${s.close}  ✗ ${s.miss}  | Attempts: ${s.attempts}  | Time: ${formatMs(s.timeMs)}`
-  );
+  if (el("cardStats")){
+    el("cardStats").textContent =
+      `This card — ✓ ${s.got}  ~ ${s.close}  ✗ ${s.miss}  | Attempts: ${s.attempts}  | Time: ${formatMs(s.timeMs)}`;
+  }
+
+  // Click-to-read (question + answer)
+  const qText = spanishMode ? (c.textSp || c.text || "") : (c.text || "");
+  const aText = spanishMode ? (c.answerTextSp || c.answerText || "") : (c.answerText || "");
+
+  if (q){
+    q.style.cursor = "pointer";
+    q.onclick = () => ttsSpeak(`Unit ${c.unit}. ${qText}`.trim(), `${c.id}:Q:${spanishMode ? "sp" : "en"}`);
+  }
+  if (a){
+    a.style.cursor = "pointer";
+    a.onclick = () => ttsSpeak(`Answer. ${aText}`.trim(), `${c.id}:A:${spanishMode ? "sp" : "en"}`);
+  }
 
   cardStartTs = Date.now();
 }
 
 function resetStudyUI(){
-  el("answerBox") && (el("answerBox").value = "");
+  if (el("answerBox")) el("answerBox").value = "";
   el("revealArea")?.classList.add("hidden");
   el("answerCol")?.classList.add("hidden");
   cardStartTs = null;
 }
 
 /* ---------- Student dashboard ---------- */
+async function openStudentDashboard(){
+  let name = (currentStudent || "").trim();
+  if (!name) name = (el("studentName")?.value || "").trim();
+  if (!name) return alert("Enter your name first.");
+
+  currentStudent = name;
+  addRecentName(currentStudent);
+  renderRecentNamesSuggestions();
+  ensureStudent(currentStudent);
+
+  try{
+    const backendStu = await fetchBackendStudent(currentStudent);
+    window.__studentBackend = (backendStu && backendStu.ok) ? backendStu : null;
+
+    renderStudentDashboard();
+    showView("studentDash");
+  } catch (err){
+    console.error("Student dashboard error:", err);
+    alert("Student dashboard hit an error. Open Console to see details.");
+  }
+}
+
 function renderStudentDashboard(){
   const localStu = progress.students[currentStudent] || null;
 
-  // Prefer backend (all devices) if available
   const backend = window.__studentBackend;
   const usingBackend = !!(backend && backend.ok && backend.byCard);
 
-  const byCard = usingBackend
-    ? (backend.byCard || {})
-    : (localStu?.byCard || {});
+  const byCard = usingBackend ? (backend.byCard || {}) : (localStu?.byCard || {});
+  const weekTotal = usingBackend ? (backend.timeWeek || 0) : (sumWeeklyTotal(localStu).total || 0);
 
-  const weekTotal = usingBackend
-    ? (backend.timeWeek || 0)
-    : (sumWeeklyTotal(localStu).total || 0);
+  if (el("dashStudentPill")) el("dashStudentPill").textContent = `Student: ${currentStudent}`;
+  if (el("dashLangPill")) el("dashLangPill").textContent = spanishMode ? "Language: Español" : "Language: English";
+  if (el("dashWeekPill")){
+    el("dashWeekPill").textContent = `This week: ${formatMs(weekTotal)}${usingBackend ? " (all devices)" : " (this device)"}`;
+  }
 
-  const pill1 = el("dashStudentPill");
-  const pill2 = el("dashLangPill");
-  const pill3 = el("dashWeekPill");
   const sumBox = el("dashSummary");
   const grid = el("dashGrid");
-
-  pill1 && (pill1.textContent = `Student: ${currentStudent}`);
-  pill2 && (pill2.textContent = spanishMode ? "Language: Español" : "Language: English");
-  pill3 && (pill3.textContent =
-    `This week: ${formatMs(weekTotal)}${usingBackend ? " (all devices)" : " (this device)"}`
-  );
 
   if (sumBox){
     let got=0, close=0, miss=0, notYet=0, attempts=0, timeMs=0;
@@ -530,6 +416,7 @@ function renderStudentDashboard(){
       `Attempts: ${s.attempts || 0}\n` +
       `Time: ${formatMs(s.timeMs || 0)}`;
 
+    // Open single-card study when clicked
     tile.addEventListener("click", () => {
       selectedUnits = new Set([Number(c.unit)]);
       queue = [c];
@@ -541,30 +428,55 @@ function renderStudentDashboard(){
     grid.appendChild(tile);
   }
 }
-/* ---------- Teacher dashboard ---------- */
-function renderTeacher(){
+
+/* ---------- Teacher dashboard (backend preferred) ---------- */
+async function openTeacherDashboard(){
+  const pin = prompt("Teacher PIN:");
+  if (pin !== TEACHER_PIN) return alert("Incorrect PIN.");
+
+  showView("teacher");
+
+  // Try backend (all devices)
+  const backend = await fetchBackendSummary(pin);
+  if (backend && backend.ok && backend.students){
+    window.__teacherDataSource = "backend";
+    window.__teacherBackendStudents = backend.students;
+    renderTeacherFromBackend(backend.students);
+    return;
+  }
+
+  // Fallback local
+  window.__teacherDataSource = "local";
+  renderTeacherLocal();
+  alert("Backend not reachable — showing only this device’s data.");
+}
+
+function renderTeacherLocal(){
   const sel = el("studentSelect");
-  if (!sel) return;
+  const body = el("teacherTable");
+  const summary = el("teacherSummary");
+  if (!sel || !body || !summary) return;
+
   sel.innerHTML = "";
+  body.innerHTML = "";
+  summary.innerHTML = `<div class="summaryChip">Source: <b>Local device</b></div>`;
 
   const students = Object.keys(progress.students).sort((a,b)=>a.localeCompare(b));
   if (!students.length){
     sel.appendChild(new Option("No students yet", ""));
-    el("teacherTable") && (el("teacherTable").innerHTML = "");
     return;
   }
 
   students.forEach(s => sel.appendChild(new Option(s, s)));
   sel.value = students[0];
-  renderTeacherTableForSelectedStudent();
+  renderTeacherTableForSelectedStudentLocal();
 }
 
-function renderTeacherTableForSelectedStudent(){
+function renderTeacherTableForSelectedStudentLocal(){
   const student = el("studentSelect")?.value;
   const body = el("teacherTable");
   if (!body) return;
   body.innerHTML = "";
-
   if (!student || !progress.students[student]) return;
 
   const byCard = progress.students[student].byCard || {};
@@ -576,26 +488,245 @@ function renderTeacherTableForSelectedStudent(){
   for (const c of sorted){
     const s = byCard[c.id] || { got:0, close:0, miss:0, attempts:0, timeMs:0 };
     const avg = s.attempts ? (s.timeMs / s.attempts) : 0;
+    const st = statusForCard(s);
 
     const tr = document.createElement("tr");
+    tr.style.background = st.color;
+
     tr.innerHTML = `
       <td><b>${escapeHtml(c.id)}</b></td>
       <td>${c.unit}</td>
-      <td>${s.got}</td>
-      <td>${s.close}</td>
-      <td>${s.miss}</td>
-      <td>${s.attempts}</td>
-      <td>${formatMs(s.timeMs)}</td>
+      <td>${escapeHtml(st.label)}</td>
+      <td>${s.got || 0}</td>
+      <td>${s.close || 0}</td>
+      <td>${s.miss || 0}</td>
+      <td>${s.attempts || 0}</td>
+      <td>${formatMs(s.timeMs || 0)}</td>
+      <td>${formatMs(0)}</td>
       <td>${formatMs(avg)}</td>
     `;
     body.appendChild(tr);
   }
 }
 
-/* ---------- Storage / Export / Import / Reset ---------- */
+/* ---------- Backend calls (JSONP for GET; POST for events) ---------- */
+function fetchBackendSummary(pin){
+  if (!BACKEND_URL) return Promise.resolve(null);
+
+  return new Promise((resolve) => {
+    const cbName = "__star_cb_" + Math.random().toString(36).slice(2);
+    const timeout = setTimeout(() => { cleanup(); resolve(null); }, 8000);
+
+    let script = null;
+    function cleanup(){
+      clearTimeout(timeout);
+      try { delete window[cbName]; } catch {}
+      if (script) script.remove();
+    }
+
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+
+    script = document.createElement("script");
+    script.src = `${BACKEND_URL}?pin=${encodeURIComponent(pin)}&mode=summary&callback=${encodeURIComponent(cbName)}`;
+    script.onerror = () => { cleanup(); resolve(null); };
+    document.body.appendChild(script);
+  });
+}
+
+function fetchBackendStudent(studentName){
+  if (!BACKEND_URL) return Promise.resolve(null);
+
+  return new Promise((resolve) => {
+    const cbName = "__star_stu_cb_" + Math.random().toString(36).slice(2);
+    const timeout = setTimeout(() => { cleanup(); resolve(null); }, 8000);
+
+    let script = null;
+    function cleanup(){
+      clearTimeout(timeout);
+      try { delete window[cbName]; } catch {}
+      if (script) script.remove();
+    }
+
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+
+    script = document.createElement("script");
+    script.src =
+      `${BACKEND_URL}?mode=student` +
+      `&student=${encodeURIComponent(studentName)}` +
+      `&code=${encodeURIComponent(STUDENT_CODE)}` +
+      `&callback=${encodeURIComponent(cbName)}`;
+
+    script.onerror = () => { cleanup(); resolve(null); };
+    document.body.appendChild(script);
+  });
+}
+
+async function sendEventToBackend(evt){
+  if (!BACKEND_URL) return;
+
+  try{
+    await fetch(BACKEND_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...evt,
+        secret: BACKEND_SECRET,
+        userAgent: navigator.userAgent
+      })
+    });
+  } catch (e){
+    console.warn("Backend send failed:", e);
+  }
+}
+
+/* ---------- Backend teacher renderers ---------- */
+function renderTeacherFromBackend(studentsObj){
+  const sel = el("studentSelect");
+  const body = el("teacherTable");
+  const summaryBox = el("teacherSummary");
+
+  if (!sel || !body || !summaryBox) return;
+
+  const names = Object.keys(studentsObj || {}).sort((a,b)=>a.localeCompare(b));
+  sel.innerHTML = "";
+  body.innerHTML = "";
+  summaryBox.innerHTML = "";
+
+  if (!names.length){
+    sel.appendChild(new Option("No students yet", ""));
+    summaryBox.innerHTML = `<div class="summaryChip">No backend data yet</div>`;
+    return;
+  }
+
+  names.forEach(n => sel.appendChild(new Option(n, n)));
+  sel.value = names[0];
+
+  renderTeacherSummaryFromBackend(studentsObj);
+  renderTeacherTableForSelectedStudentFromBackend(studentsObj);
+}
+
+function renderTeacherSummaryFromBackend(studentsObj){
+  const student = el("studentSelect")?.value;
+  const box = el("teacherSummary");
+  if (!box) return;
+
+  if (!student || !studentsObj[student]){
+    box.innerHTML = "";
+    return;
+  }
+
+  const stu = studentsObj[student]; // { byCard, timeEver, timeWeek }
+  const byCard = stu.byCard || {};
+  const totalCards = cards.length;
+
+  let knownCards = 0;
+  let attemptedCards = 0;
+
+  for (const c of cards){
+    const s = byCard[c.id];
+    if (!s || (s.attempts || 0) === 0) continue;
+    attemptedCards++;
+    const got = s.got || 0;
+    const close = s.close || 0;
+    const miss = s.miss || 0;
+    if (got > (close + miss)) knownCards++;
+  }
+
+  const pctKnownAll = totalCards ? Math.round((knownCards / totalCards) * 100) : 0;
+  const pctKnownAttempted = attemptedCards ? Math.round((knownCards / attemptedCards) * 100) : 0;
+
+  box.innerHTML = `
+    <div class="summaryChip"><b>${escapeHtml(student)}</b></div>
+    <div class="summaryChip">Known (of all cards): <b>${pctKnownAll}%</b></div>
+    <div class="summaryChip">Known (of attempted): <b>${pctKnownAttempted}%</b></div>
+    <div class="summaryChip">Time ever: <b>${formatMs(stu.timeEver || 0)}</b></div>
+    <div class="summaryChip">Time this week: <b>${formatMs(stu.timeWeek || 0)}</b></div>
+    <div class="summaryChip">Source: <b>Backend (all devices)</b></div>
+  `;
+}
+
+function renderTeacherTableForSelectedStudentFromBackend(studentsObj){
+  const student = el("studentSelect")?.value;
+  const body = el("teacherTable");
+  if (!body) return;
+  body.innerHTML = "";
+
+  if (!student || !studentsObj[student]) return;
+
+  const stu = studentsObj[student];
+  const byCard = stu.byCard || {};
+
+  const sorted = [...cards].sort((a,b)=>{
+    if (a.unit !== b.unit) return a.unit - b.unit;
+    return a.id.localeCompare(b.id, undefined, { numeric:true });
+  });
+
+  for (const c of sorted){
+    const s = byCard[c.id] || { unit:c.unit, got:0, close:0, miss:0, attempts:0, timeMs:0, timeWeek:0 };
+    const avg = s.attempts ? (s.timeMs / s.attempts) : 0;
+
+    const st = statusForCardBackend(s);
+
+    const tr = document.createElement("tr");
+    tr.style.background = st.color;
+    tr.title = st.label;
+
+    tr.innerHTML = `
+      <td><b>${escapeHtml(c.id)}</b></td>
+      <td>${c.unit}</td>
+      <td>${st.pillHtml}</td>
+      <td>${s.got || 0}</td>
+      <td>${s.close || 0}</td>
+      <td>${s.miss || 0}</td>
+      <td>${s.attempts || 0}</td>
+      <td>${formatMs(s.timeMs || 0)}</td>
+      <td>${formatMs(s.timeWeek || 0)}</td>
+      <td>${formatMs(avg)}</td>
+    `;
+    body.appendChild(tr);
+  }
+}
+
+/* ---------- Status helpers ---------- */
+function statusForCard(s){
+  if (!s || (s.attempts || 0) === 0) return { color: "var(--gray)", label: "Not attempted" };
+
+  const got = s.got || 0;
+  const close = s.close || 0;
+  const miss = s.miss || 0;
+
+  if (miss > close && miss > got) return { color: "var(--red)", label: "Needs practice" };
+  if (close > got) return { color: "var(--yellow)", label: "Close" };
+  if (got > 0) return { color: "var(--green)", label: "Got it" };
+
+  return { color: "var(--gray)", label: "Not attempted" };
+}
+
+function statusForCardBackend(s){
+  if (!s || (s.attempts || 0) === 0){
+    return { color:"var(--gray)", label:"Not attempted", pillHtml:`<span class="statusPill">Not yet</span>` };
+  }
+  const got = s.got || 0;
+  const close = s.close || 0;
+  const miss = s.miss || 0;
+
+  if (miss > close && miss > got){
+    return { color:"var(--red)", label:"Needs practice", pillHtml:`<span class="statusPill" style="background:var(--red)">✗ Practice</span>` };
+  }
+  if (close > got){
+    return { color:"var(--yellow)", label:"Close", pillHtml:`<span class="statusPill" style="background:var(--yellow)">~ Close</span>` };
+  }
+  if (got > 0){
+    return { color:"var(--green)", label:"Got it", pillHtml:`<span class="statusPill" style="background:var(--green)">✓ Got</span>` };
+  }
+  return { color:"var(--gray)", label:"Not attempted", pillHtml:`<span class="statusPill">Not yet</span>` };
+}
+
+/* ---------- Local progress storage ---------- */
 function ensureStudent(name){
   if (!progress.students[name]){
-    progress.students[name] = { totals:{ got:0, close:0, miss:0 }, byCard:{} };
+    progress.students[name] = { byCard:{}, log:[] };
     saveProgress(progress);
   }
 }
@@ -619,93 +750,8 @@ function saveProgress(obj){
     console.warn("saveProgress failed:", e);
   }
 }
-function exportJSON(){
-  const blob = new Blob([JSON.stringify(progress, null, 2)], { type:"application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "star-progress.json";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
 
-function importJSON(e){
-  const file = e.target.files?.[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    try{
-      const obj = JSON.parse(reader.result);
-      if (!obj || typeof obj !== "object" || !obj.students) throw new Error("Invalid file.");
-      progress = obj;
-      saveProgress(progress);
-      renderTeacher();
-      alert("Imported!");
-    }catch(err){
-      alert("Import failed: " + err.message);
-    }finally{
-      e.target.value = "";
-    }
-  };
-  reader.readAsText(file);
-}
-
-function resetAll(){
-  if (!confirm("Reset all progress on this device?")) return;
-  progress = { students:{} };
-  saveProgress(progress);
-  renderTeacher();
-}
-
-/* ---------- Helpers ---------- */
-function fisherYates(arr){
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function formatMs(ms){
-  ms = Number(ms) || 0;
-  const totalSeconds = Math.round(ms / 1000);
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  if (m <= 0) return `${s}s`;
-  return `${m}m ${s}s`;
-}
-
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-async function sendEventToBackend(evt) {
-  if (!BACKEND_URL) return;
-
-  try {
-    await fetch(BACKEND_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...evt,
-        secret: BACKEND_SECRET,
-        userAgent: navigator.userAgent
-      })
-    });
-  } catch (e) {
-    // Don’t block studying if internet is flaky
-    console.warn("Backend send failed:", e);
-  }
-}
-// ---- Weekly time helpers (needed for Student Dashboard + Teacher summary) ----
+/* ---------- Weekly total helper (local) ---------- */
 function startOfWeekLocalTs(nowTs){
   const d = new Date(nowTs);
   const day = d.getDay(); // 0=Sun,1=Mon...
@@ -719,300 +765,13 @@ function sumWeeklyTotal(stu){
   const weekStart = startOfWeekLocalTs(Date.now());
   let total = 0;
   if (!stu || !Array.isArray(stu.log)) return { weekStart, total: 0 };
-
-  for (const e of stu.log){
-    if ((e.ts || 0) >= weekStart) total += (e.dtMs || 0);
-  }
-  return { weekStart, total };
-}
-async function fetchBackendSummary(pin){
-  if (!BACKEND_URL) return null;
-
-  return new Promise((resolve) => {
-    const cbName = "__star_cb_" + Math.random().toString(36).slice(2);
-    const timeout = setTimeout(() => {
-      cleanup();
-      resolve(null);
-    }, 8000);
-
-    function cleanup(){
-      clearTimeout(timeout);
-      try { delete window[cbName]; } catch {}
-      script.remove();
-    }
-
-    window[cbName] = (data) => {
-      cleanup();
-      resolve(data);
-    };
-
-    const script = document.createElement("script");
-    const url = `${BACKEND_URL}?pin=${encodeURIComponent(pin)}&mode=summary&callback=${encodeURIComponent(cbName)}`;
-    script.src = url;
-    script.onerror = () => {
-      cleanup();
-      resolve(null);
-    };
-    document.body.appendChild(script);
-  });
-}
-async function fetchBackendStudent(studentName){
-  if (!BACKEND_URL) return null;
-
-  return new Promise((resolve) => {
-    const cbName = "__star_stu_cb_" + Math.random().toString(36).slice(2);
-    const timeout = setTimeout(() => {
-      cleanup();
-      resolve(null);
-    }, 8000);
-
-    function cleanup(){
-      clearTimeout(timeout);
-      try { delete window[cbName]; } catch {}
-      script.remove();
-    }
-
-    window[cbName] = (data) => {
-      cleanup();
-      resolve(data);
-    };
-
-    const script = document.createElement("script");
-    const url =
-      `${BACKEND_URL}?mode=student` +
-      `&student=${encodeURIComponent(studentName)}` +
-      `&code=${encodeURIComponent(STUDENT_CODE)}` +
-      `&callback=${encodeURIComponent(cbName)}`;
-
-    script.src = url;
-    script.onerror = () => {
-      cleanup();
-      resolve(null);
-    };
-    document.body.appendChild(script);
-  });
-}
-async function sendEventToBackend(evt){
-  if (!BACKEND_URL) return;
-  try {
-    await fetch(BACKEND_URL, {
-      method: "POST",
-      mode: "no-cors", // <-- IMPORTANT
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...evt,
-        secret: BACKEND_SECRET,
-        userAgent: navigator.userAgent
-      })
-    });
-  } catch (e) {
-    console.warn("Backend send failed:", e);
-  }
-}
-function renderTeacherFromBackend(studentsObj, pin){
-  const sel = el("studentSelect");
-  const body = el("teacherTable");
-  const summaryBox = el("teacherSummary");
-
-  if (!sel || !body || !summaryBox) return;
-
-  const names = Object.keys(studentsObj || {}).sort((a,b)=>a.localeCompare(b));
-  sel.innerHTML = "";
-  body.innerHTML = "";
-  summaryBox.innerHTML = "";
-
-  if (names.length === 0){
-    sel.appendChild(new Option("No students yet", ""));
-    summaryBox.innerHTML = `<div class="summaryChip">No backend data yet</div>`;
-    return;
-  }
-
-  names.forEach(n => sel.appendChild(new Option(n, n)));
-  sel.value = names[0];
-
-  renderTeacherSummaryFromBackend(studentsObj);
-  renderTeacherTableForSelectedStudentFromBackend(studentsObj);
-}
-
-function renderTeacherSummaryFromBackend(studentsObj){
-  const student = el("studentSelect")?.value;
-  const box = el("teacherSummary");
-  if (!box) return;
-
-  if (!student || !studentsObj[student]) {
-    box.innerHTML = "";
-    return;
-  }
-
-  const stu = studentsObj[student]; // { byCard, timeEver, timeWeek }
-  const byCard = stu.byCard || {};
-  const totalCards = cards.length;
-
-  let knownCards = 0;
-  let attemptedCards = 0;
-
-  // Determine known based on the SAME rule you wanted:
-  // got > close + miss on that card
-  for (const c of cards){
-    const s = byCard[c.id];
-    if (!s || (s.attempts || 0) === 0) continue;
-    attemptedCards++;
-    const got = s.got || 0;
-    const close = s.close || 0;
-    const miss = s.miss || 0;
-    if (got > (close + miss)) knownCards++;
-  }
-
-  const pctKnownAll = totalCards ? Math.round((knownCards / totalCards) * 100) : 0;
-  const pctKnownAttempted = attemptedCards ? Math.round((knownCards / attemptedCards) * 100) : 0;
-
-  const timeEver = stu.timeEver || 0;
-  const timeWeek = stu.timeWeek || 0;
-
-  box.innerHTML = `
-    <div class="summaryChip"><b>${escapeHtml(student)}</b></div>
-    <div class="summaryChip">Known (of all cards): <b>${pctKnownAll}%</b></div>
-    <div class="summaryChip">Known (of attempted): <b>${pctKnownAttempted}%</b></div>
-    <div class="summaryChip">Time ever: <b>${formatMs(timeEver)}</b></div>
-    <div class="summaryChip">Time this week: <b>${formatMs(timeWeek)}</b></div>
-    <div class="summaryChip">Source: <b>Backend (all devices)</b></div>
-  `;
-}
-
-function renderTeacherTableForSelectedStudentFromBackend(studentsObj){
-  const student = el("studentSelect")?.value;
-  const body = el("teacherTable");
-  if (!body) return;
-  body.innerHTML = "";
-
-  if (!student || !studentsObj[student]) return;
-
-  const stu = studentsObj[student];
-  const byCard = stu.byCard || {};
-
-  const sorted = [...cards].sort((a,b)=>{
-    if (a.unit !== b.unit) return a.unit - b.unit;
-    return a.id.localeCompare(b.id, undefined, { numeric:true });
-  });
-
-  for (const c of sorted){
-    const s = byCard[c.id] || { unit: c.unit, got:0, close:0, miss:0, attempts:0, timeMs:0, timeWeek:0 };
-    const avg = s.attempts ? (s.timeMs / s.attempts) : 0;
-
-    const { color, label, pillHtml } = statusForCardBackend(s);
-
-    const tr = document.createElement("tr");
-    tr.style.background = color;
-    tr.title = label;
-
-    tr.innerHTML = `
-      <td><b>${escapeHtml(c.id)}</b></td>
-      <td>${c.unit}</td>
-      <td>${pillHtml}</td>
-      <td>${s.got || 0}</td>
-      <td>${s.close || 0}</td>
-      <td>${s.miss || 0}</td>
-      <td>${s.attempts || 0}</td>
-      <td>${formatMs(s.timeMs || 0)}</td>
-      <td>${formatMs(s.timeWeek || 0)}</td>
-      <td>${formatMs(avg)}</td>
-    `;
-    body.appendChild(tr);
-  }
-}
-
-/* Status coloring/pill for backend rows (same logic) */
-function statusForCardBackend(s){
-  if (!s || (s.attempts || 0) === 0){
-    return {
-      color: "var(--gray)",
-      label: "Not attempted",
-      pillHtml: `<span class="statusPill">Not yet</span>`
-    };
-  }
-
-  const got = s.got || 0;
-  const close = s.close || 0;
-  const miss = s.miss || 0;
-
-  if (miss > close && miss > got){
-    return {
-      color: "var(--red)",
-      label: "Needs practice",
-      pillHtml: `<span class="statusPill" style="background:var(--red)">✗ Practice</span>`
-    };
-  }
-  if (close > got){
-    return {
-      color: "var(--yellow)",
-      label: "Close",
-      pillHtml: `<span class="statusPill" style="background:var(--yellow)">~ Close</span>`
-    };
-  }
-  if (got > 0){
-    return {
-      color: "var(--green)",
-      label: "Got it",
-      pillHtml: `<span class="statusPill" style="background:var(--green)">✓ Got</span>`
-    };
-  }
-
-  return {
-    color: "var(--gray)",
-    label: "Not attempted",
-    pillHtml: `<span class="statusPill">Not yet</span>`
-  };
-}
-// ---- Weekly time helpers (needed for Student Dashboard) ----
-function startOfWeekLocalTs(nowTs){
-  const d = new Date(nowTs);
-  const day = d.getDay(); // 0=Sun,1=Mon...
-  const diffToMonday = (day === 0) ? 6 : (day - 1);
-  d.setHours(0,0,0,0);
-  d.setDate(d.getDate() - diffToMonday);
-  return d.getTime();
-}
-
-function sumWeeklyTotal(stu){
-  const weekStart = startOfWeekLocalTs(Date.now());
-  let total = 0;
-  if (!stu || !Array.isArray(stu.log)) return { weekStart, total: 0 };
-
   for (const e of stu.log){
     if ((e.ts || 0) >= weekStart) total += (e.dtMs || 0);
   }
   return { weekStart, total };
 }
 
-console.log("[STAR] helpers loaded:", typeof sumWeeklyTotal);
-
-// ---- Card status helper (Student Dashboard) ----
-function statusForCard(s){
-  // Returns { color, label } for a student's per-card stats object
-  if (!s || (s.attempts || 0) === 0){
-    return { color: "var(--gray)", label: "Not attempted" };
-  }
-
-  const got = s.got || 0;
-  const close = s.close || 0;
-  const miss = s.miss || 0;
-
-  if (miss > close && miss > got){
-    return { color: "var(--red)", label: "Needs practice" };
-  }
-  if (close > got){
-    return { color: "var(--yellow)", label: "Close" };
-  }
-  if (got > 0){
-    return { color: "var(--green)", label: "Got it" };
-  }
-
-  return { color: "var(--gray)", label: "Not attempted" };
-}
-
-console.log("[STAR] statusForCard loaded:", typeof statusForCard);
-
-// ---- Recent student names (local device only) ----
+/* ---------- Recent student names (device only) ---------- */
 const RECENT_NAMES_KEY = "star_recent_students_v1";
 const MAX_RECENT_NAMES = 25;
 
@@ -1039,11 +798,8 @@ function addRecentName(name){
   if (!n) return;
 
   let arr = loadRecentNames();
-
-  // de-dupe (case-insensitive), keep most-recent first
   arr = arr.filter(x => String(x).toLowerCase() !== n.toLowerCase());
   arr.unshift(n);
-
   if (arr.length > MAX_RECENT_NAMES) arr = arr.slice(0, MAX_RECENT_NAMES);
   saveRecentNames(arr);
 }
@@ -1061,77 +817,20 @@ function renderRecentNamesSuggestions(){
   }
 }
 
-// ---- Initialize recent student suggestions on page load ----
-document.addEventListener("DOMContentLoaded", () => {
-  renderRecentNamesSuggestions();
-});
-
-// ---- Text-to-Speech (Web Speech API) ----
+/* ---------- TTS (click-to-toggle) ---------- */
 let ttsVoices = [];
+let __ttsActive = false;
+let __ttsLastKey = "";
 
 function loadTtsVoices(){
   if (!("speechSynthesis" in window)) return;
   ttsVoices = window.speechSynthesis.getVoices() || [];
 }
-setSpanishMode(spanishMode);
-  
-// Some browsers load voices async
-if ("speechSynthesis" in window) {
-  loadTtsVoices();
-  window.speechSynthesis.onvoiceschanged = loadTtsVoices;
-}
 
 function pickVoiceForLang(lang){
-  // lang: "en" or "sp"
   const want = (lang === "sp") ? ["es", "es-"] : ["en", "en-"];
-
-  // Prefer a voice that matches language
-  const v = ttsVoices.find(v => want.some(p => (v.lang || "").toLowerCase().startsWith(p)));
-  return v || null;
+  return ttsVoices.find(v => want.some(p => (v.lang || "").toLowerCase().startsWith(p))) || null;
 }
-
-function speak(text){
-  if (!text) return;
-  if (!("speechSynthesis" in window)) {
-    alert("Text-to-speech is not supported in this browser.");
-    return;
-  }
-
-  // Stop anything already speaking
-  window.speechSynthesis.cancel();
-
-  const u = new SpeechSynthesisUtterance(text);
-  const rate = getTtsRate();
-  u.rate = Math.min(1.3, Math.max(0.7, rate));
-
-  const v = pickVoiceForLang(spanishMode ? "sp" : "en");
-  if (v) u.voice = v;
-
-  window.speechSynthesis.speak(u);
-}
-
-// Reads the current card question (and optionally answer)
-window.readCardNow = function readCardNow(includeAnswer=false){
-  if (!queue.length) return;
-  const c = queue[idx % queue.length];
-
-  // Read the text we have in cards.json
-  // (If you only have images and no text, see note below.)
-  let txt = c.text || c.q || c.id || "Card";
-
-  // If you want it to read the unit too:
-  txt = `Unit ${c.unit}. ${txt}`;
-
-  if (includeAnswer && (c.answerText || c.a)) {
-    txt += `. Answer: ${c.answerText || c.a}`;
-  }
-
-  speak(txt);
-};
-
-// ---- TTS click-to-toggle helpers ----
-let __ttsActive = false;
-let __ttsLastKey = "";
 
 function ttsStop(){
   if (!("speechSynthesis" in window)) return;
@@ -1140,116 +839,124 @@ function ttsStop(){
   __ttsLastKey = "";
 }
 
+function getTtsRate(){
+  // If you later add a slider, this will still work. For now default 1.0.
+  const saved = Number(localStorage.getItem("star_tts_rate_v1") || 1.0);
+  return Number.isNaN(saved) ? 1.0 : saved;
+}
+
 function ttsSpeak(text, key){
   if (!text) return;
+  if (!("speechSynthesis" in window)) return;
 
-  if (!("speechSynthesis" in window)) {
-    alert("Text-to-speech is not supported in this browser.");
-    return;
-  }
-
-  // Toggle off if clicking the same thing while speaking
   const currentlySpeaking = window.speechSynthesis.speaking || window.speechSynthesis.pending;
   if (currentlySpeaking && __ttsActive && __ttsLastKey === key){
     ttsStop();
     return;
   }
 
-  // Otherwise start speaking this new text
   ttsStop();
   __ttsActive = true;
   __ttsLastKey = key;
 
   const u = new SpeechSynthesisUtterance(text);
+  u.rate = Math.min(1.3, Math.max(0.7, getTtsRate()));
 
-  const rate = Number(el("ttsRate")?.value || 1.0);
-  u.rate = Math.min(1.3, Math.max(0.7, rate));
+  const v = pickVoiceForLang(spanishMode ? "sp" : "en");
+  if (v) u.voice = v;
 
-  // Choose voice by language (re-uses your existing helper if present)
-  if (typeof pickVoiceForLang === "function") {
-    const v = pickVoiceForLang(spanishMode ? "sp" : "en");
-    if (v) u.voice = v;
-  }
-
-  u.onend = () => {
-    __ttsActive = false;
-    __ttsLastKey = "";
-  };
-  u.onerror = () => {
-    __ttsActive = false;
-    __ttsLastKey = "";
-  };
+  u.onend = () => { __ttsActive = false; __ttsLastKey = ""; };
+  u.onerror = () => { __ttsActive = false; __ttsLastKey = ""; };
 
   window.speechSynthesis.speak(u);
 }
-// ---- Global language toggle (English/Spanish) ----
-function setSpanishMode(on){
-  spanishMode = !!on;
 
-  // keep the global toggle synced
-  const g = el("globalSpanishToggle");
-  if (g) g.checked = spanishMode;
-
-  // Re-render current view so images/text update immediately
-  // Stop reading if switching language
-  if (typeof ttsStop === "function") ttsStop();
-
-  // If you track views, use that; otherwise safely try both
-  try { renderCard(); } catch {}
-  try { renderStudentDashboard(); } catch {}
-  try { renderTeacher(); } catch {}
-}
-
-function wireGlobalLanguageToggle(){
-  const g = el("globalSpanishToggle");
-  if (!g) return;
-
-  g.addEventListener("change", () => {
-    setSpanishMode(g.checked);
-  });
-}
-const TTS_RATE_KEY = "star_tts_rate_v1";
-
-function getTtsRate(){
-  // Prefer slider value if present; otherwise use saved value; fallback 1.0
-  const slider = el("ttsRate");
-  if (slider) {
-    const v = Number(slider.value || 1.0);
-    if (!Number.isNaN(v)) return v;
+/* ---------- Utilities ---------- */
+function fisherYates(arr){
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  const saved = Number(localStorage.getItem(TTS_RATE_KEY) || 1.0);
-  return Number.isNaN(saved) ? 1.0 : saved;
+  return a;
 }
 
-function wireTtsRatePersistence(){
-  const slider = el("ttsRate");
-  if (!slider) return;
+function formatMs(ms){
+  ms = Number(ms) || 0;
+  const totalSeconds = Math.round(ms / 1000);
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  if (m <= 0) return `${s}s`;
+  return `${m}m ${s}s`;
+}
 
-  // load saved value into slider
-  const saved = localStorage.getItem(TTS_RATE_KEY);
-  if (saved !== null) slider.value = String(saved);
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
 
-  slider.addEventListener("input", () => {
-    localStorage.setItem(TTS_RATE_KEY, String(slider.value));
+/* =====================================================
+   ✅ WIRE EVERYTHING (matches your updated index.html)
+   ===================================================== */
+function wireEverything(){
+  // Header buttons
+  el("modeStudent")?.addEventListener("click", () => showView("start"));
+  el("modeTeacher")?.addEventListener("click", openTeacherDashboard);
+  el("langToggleBtn")?.addEventListener("click", () => setSpanishMode(!spanishMode));
+
+  // Start view
+  el("startBtn")?.addEventListener("click", start);
+  el("studentDashBtn")?.addEventListener("click", openStudentDashboard);
+
+  // Study view
+  el("dashInStudyBtn")?.addEventListener("click", openStudentDashboard);
+  el("changeBtn")?.addEventListener("click", goToStart);
+  el("checkBtn")?.addEventListener("click", () => { ttsStop(); reveal(); });
+  el("skipBtn")?.addEventListener("click", () => advance("skip"));
+  el("rateGot")?.addEventListener("click", () => advance("got"));
+  el("rateClose")?.addEventListener("click", () => advance("close"));
+  el("rateMiss")?.addEventListener("click", () => advance("miss"));
+
+  // Student dashboard
+  el("dashBackBtn")?.addEventListener("click", goToStart);
+
+  // Teacher dashboard
+  el("studentSelect")?.addEventListener("change", () => {
+    if (window.__teacherDataSource === "backend") {
+      const students = window.__teacherBackendStudents || {};
+      renderTeacherSummaryFromBackend(students);
+      renderTeacherTableForSelectedStudentFromBackend(students);
+    } else {
+      renderTeacherTableForSelectedStudentLocal();
+    }
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  wireTtsRatePersistence();
-});
-
-  document.addEventListener("DOMContentLoaded", async () => {
+/* ---------- Init ---------- */
+document.addEventListener("DOMContentLoaded", async () => {
   try{
+    // Voices (optional)
+    if ("speechSynthesis" in window){
+      loadTtsVoices();
+      window.speechSynthesis.onvoiceschanged = loadTtsVoices;
+    }
+
+    renderRecentNamesSuggestions();
+    setSpanishMode(spanishMode);
+
     await loadCards();
     buildUnitUI();
-     wireStartViewButtons();
-    console.log("[init] done");
+
+    wireEverything();
+
+    showView("start");
+    console.log("[init] ready");
   } catch (e){
     console.error("[init] failed", e);
+    alert("App failed to initialize. Open Console for details.");
   }
 });
-
-  function wireStartViewButtons(){
-  el("startBtn")?.addEventListener("click", () => start());
-  el("studentDashBtn")?.addEventListener("click", () => openStudentDashboard());
-}
