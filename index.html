@@ -50,33 +50,26 @@
     <section id="studyView" class="hidden">
 
       <div class="topbar">
-        <div class="pills">
-          <span class="pillSmall" id="studentPill"></span>
-          <span class="pillSmall" id="unitPill"></span>
-          <span class="pillSmall" id="langPill"></span>
-          <span class="pillSmall" id="progressPill"></span>
-        </div>
-<div class="actions" style="margin:0; align-items:center; gap:10px;">
-  <!-- Dashboard -->
-  <button id="dashInStudyBtn" class="ghost" type="button">Dashboard</button>
-
-  <!-- Study/Quiz toggle -->
-  <label class="switch" title="Toggle Quiz Mode">
-    <input id="quizModeToggle" type="checkbox">
-    <span class="slider"></span>
-  </label>
-  <span id="quizModeLabel" class="hint" style="margin-right:6px;">Study</span>
-
-  <!-- Home (Change units) -->
-  <button id="homeBtn" class="ghost" type="button" title="Home">🏠</button>
+       <div class="pills">
+  <span class="pillSmall" id="studentPill"></span>
+  <span class="pillSmall" id="unitPill"></span>
+</div>
+<div class="actions studyHeaderActions">
+  <!-- Study / Quiz segmented toggle -->
+  <div class="segToggle" id="quizSeg" role="group" aria-label="Study or Quiz mode">
+    <button id="segStudyBtn" class="segBtn active" type="button">📘 Study mode</button>
+    <button id="segQuizBtn" class="segBtn" type="button">📝 Quiz mode</button>
+  </div>
 
   <span class="topBarSpacer"></span>
 
-  <!-- Badges (right-most) -->
-  <button id="badgesInStudyBtn" class="ghost" type="button" title="Badges">🏆</button>
+  <!-- Right-aligned action tiles -->
+  <button id="dashInStudyBtn" class="ghost" type="button">📊 Dashboard</button>
+  <button id="badgesInStudyBtn" class="ghost" type="button">🏆 Badges</button>
+  <button id="homeBtn" class="ghost" type="button">🏠 Home</button>
 </div>
 
-      <h2 class="screenTitle">Study</h2>
+     
 
       <div class="imgRow">
         <div class="imgCol">
