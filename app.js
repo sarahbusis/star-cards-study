@@ -181,7 +181,11 @@ function advance(mode){
   const stu = progress.students[currentStudent];
 
   const now = Date.now();
-  const dt = (cardStartTs ? Math.max(0, now - cardStartTs) : 0);
+
+  // ✅ 3-minute cap per advance to prevent idle-farming
+  const MAX_MS_PER_ADVANCE = 3 * 60 * 1000; // 180,000 ms
+  const rawDt = (cardStartTs ? Math.max(0, now - cardStartTs) : 0);
+  const dt = Math.min(rawDt, MAX_MS_PER_ADVANCE);
 
   if (!stu.byCard[c.id]) stu.byCard[c.id] = { got:0, close:0, miss:0, attempts:0, timeMs:0 };
   const s = stu.byCard[c.id];
@@ -207,9 +211,13 @@ function advance(mode){
     unit: c.unit,
     rating: rated ? mode : "skip",
     dtMs: dt,
+    capped: rawDt > dt,              // optional: helps you audit idling later
     lang: spanishMode ? "sp" : "en"
   });
-checkForNewBadgesAndPopup();
+
+  // ✅ show badge popup if a new badge was earned
+  checkForNewBadgesAndPopup();
+
   idx++;
   renderCard();
 }
