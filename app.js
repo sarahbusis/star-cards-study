@@ -46,6 +46,7 @@ function showView(which){
     study: "studyView",
     studentDash: "studentDashView",
     badges: "badgesView",
+     quizDash: "quizDashView",
     teacher: "teacherView",
   };
 
@@ -1357,7 +1358,10 @@ el("badgePopup")?.addEventListener("click", (e) => {
   el("modeStudent")?.addEventListener("click", () => showView("start"));
   el("modeTeacher")?.addEventListener("click", openTeacherDashboard);
   el("langToggleBtn")?.addEventListener("click", () => setSpanishMode(!spanishMode));
-
+el("quizInStudyBtn")?.addEventListener("click", () => openQuizMode());
+el("quizDashBackBtn")?.addEventListener("click", () => showView("study"));
+   el("quizDashBtn")?.addEventListener("click", openQuizDashboard);
+   
   // Start view
   el("startBtn")?.addEventListener("click", start);
   el("studentDashBtn")?.addEventListener("click", openStudentDashboard);
