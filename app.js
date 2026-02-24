@@ -1763,3 +1763,4 @@ hideBadgePopup();
     alert("App failed to initialize. Open Console for details.");
   }
 });
+}
