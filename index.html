@@ -56,14 +56,25 @@
           <span class="pillSmall" id="langPill"></span>
           <span class="pillSmall" id="progressPill"></span>
         </div>
-       <div class="actions" style="margin:0;">
-  <button id="dashInStudyBtn" class="ghost" type="button">My Dashboard</button>
-  <button id="badgesInStudyBtn" class="ghost" type="button">Badges</button>
-        <button id="quizInStudyBtn" class="ghost" type="button">Quiz</button>
-<button id="quizDashBtn" class="ghost" type="button">Quiz Dashboard</button>
-  <button id="changeBtn" class="ghost" type="button">Change units</button>
+<div class="actions" style="margin:0; align-items:center; gap:10px;">
+  <!-- Dashboard -->
+  <button id="dashInStudyBtn" class="ghost" type="button">Dashboard</button>
+
+  <!-- Study/Quiz toggle -->
+  <label class="switch" title="Toggle Quiz Mode">
+    <input id="quizModeToggle" type="checkbox">
+    <span class="slider"></span>
+  </label>
+  <span id="quizModeLabel" class="hint" style="margin-right:6px;">Study</span>
+
+  <!-- Home (Change units) -->
+  <button id="homeBtn" class="ghost" type="button" title="Home">🏠</button>
+
+  <span class="topBarSpacer"></span>
+
+  <!-- Badges (right-most) -->
+  <button id="badgesInStudyBtn" class="ghost" type="button" title="Badges">🏆</button>
 </div>
-      </div>
 
       <h2 class="screenTitle">Study</h2>
 
@@ -87,10 +98,12 @@
   <div id="quizVerdict" style="font-weight:800; font-size:18px; margin-bottom:6px;"></div>
   <div id="quizMessage" class="hint"></div>
 </div>
-      <div class="actions">
-        <button id="checkBtn" class="primary" type="button">Check</button>
-        <button id="skipBtn" class="ghost" type="button">Skip</button>
-      </div>
+
+<div class="actions" id="quizControls">
+  <button id="checkBtn" class="primary" type="button">Check</button>
+  <button id="skipBtn" class="ghost" type="button">Skip</button>
+  <button id="nextBtn" class="primary hidden" type="button">Next</button>
+</div>
 
       <section id="revealArea" class="hidden">
         <p class="screenTitle">Rate yourself</p>
