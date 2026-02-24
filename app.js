@@ -209,7 +209,7 @@ function advance(mode){
     dtMs: dt,
     lang: spanishMode ? "sp" : "en"
   });
-
+checkForNewBadgesAndPopup();
   idx++;
   renderCard();
 }
@@ -916,6 +916,46 @@ const BADGES = [
   { minutes: 500, cards: 90,  name: "STAR Master",     emoji: "👑" },
 ];
 
+const BADGE_EARNED_KEY = "star_badges_earned_v1";
+
+function badgeKey(student, badge){
+  // Unique per student + badge requirement
+  return `${student}::${badge.minutes}m::${badge.cards}c`;
+}
+
+function loadEarnedBadges(){
+  try{
+    const raw = localStorage.getItem(BADGE_EARNED_KEY);
+    const obj = raw ? JSON.parse(raw) : {};
+    return (obj && typeof obj === "object") ? obj : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveEarnedBadges(obj){
+  try{
+    localStorage.setItem(BADGE_EARNED_KEY, JSON.stringify(obj));
+  } catch {}
+}
+
+function showBadgePopup(badge, totals){
+  const pop = el("badgePopup");
+  if (!pop) return;
+
+  el("badgePopupEmoji") && (el("badgePopupEmoji").textContent = badge.emoji);
+  el("badgePopupTitle") && (el("badgePopupTitle").textContent = `Badge earned: ${badge.name}!`);
+  el("badgePopupBody") && (el("badgePopupBody").textContent =
+    `You reached ${totals.minutes} minutes and ${totals.cards} cards attempted. Keep going!`
+  );
+
+  pop.classList.remove("hidden");
+}
+
+function hideBadgePopup(){
+  el("badgePopup")?.classList.add("hidden");
+}
+
 function totalMsLocalEverForStudent(stu){
   if (!stu || !stu.byCard) return 0;
   let total = 0;
@@ -924,7 +964,34 @@ function totalMsLocalEverForStudent(stu){
   }
   return total;
 }
+function checkForNewBadgesAndPopup(){
+  if (!currentStudent) return;
 
+  const stu = progress.students[currentStudent];
+  if (!stu) return;
+
+  const timeEverMs = totalMsLocalEverForStudent(stu);
+  const minutes = Math.floor(timeEverMs / 60000);
+  const cardsAttempted = distinctCardsLocalAttempted(stu);
+
+  const earned = loadEarnedBadges();
+
+  // Find the FIRST badge that is newly earned (in order)
+  for (const b of BADGES){
+    const meets = (minutes >= b.minutes && cardsAttempted >= b.cards);
+    if (!meets) continue;
+
+    const k = badgeKey(currentStudent, b);
+    if (earned[k]) continue; // already celebrated
+
+    // Mark as earned and show popup
+    earned[k] = { ts: Date.now(), minutes, cardsAttempted };
+    saveEarnedBadges(earned);
+
+    showBadgePopup(b, { minutes, cards: cardsAttempted });
+    break;
+  }
+}
 function formatMinutesFromMs(ms){
   const mins = Math.floor((Number(ms) || 0) / 60000);
   return `${mins} min`;
@@ -1073,6 +1140,10 @@ el("badgesBtn")?.addEventListener("click", openBadges);
 
 // Badges view
 el("badgesBackBtn")?.addEventListener("click", goToStart);
+el("badgePopupCloseBtn")?.addEventListener("click", hideBadgePopup);
+el("badgePopup")?.addEventListener("click", (e) => {
+  if (e.target && e.target.id === "badgePopup") hideBadgePopup(); // click outside closes
+});
    
   // Student dashboard
   el("dashBackBtn")?.addEventListener("click", goToStart);
