@@ -59,6 +59,7 @@
        <div class="actions" style="margin:0;">
   <button id="dashInStudyBtn" class="ghost" type="button">My Dashboard</button>
   <button id="badgesInStudyBtn" class="ghost" type="button">Badges</button>
+         <button id="quizInStudyBtn" class="ghost" type="button">Quiz</button>
   <button id="changeBtn" class="ghost" type="button">Change units</button>
 </div>
       </div>
@@ -81,7 +82,10 @@
       </div>
 
       <textarea id="answerBox" rows="3" placeholder="Type your answer here..."></textarea>
-
+<div id="quizFeedback" class="hidden" style="margin:10px 0; padding:10px; border-radius:12px; background:rgba(0,0,0,0.04); text-align:left;">
+  <div id="quizVerdict" style="font-weight:800; font-size:18px; margin-bottom:6px;"></div>
+  <div id="quizMessage" class="hint"></div>
+</div>
       <div class="actions">
         <button id="checkBtn" class="primary" type="button">Check</button>
         <button id="skipBtn" class="ghost" type="button">Skip</button>
@@ -125,7 +129,27 @@
       <div class="dashSummary" id="dashSummary"></div>
       <div class="dashGrid" id="dashGrid"></div>
     </section>
-<!-- BADGES VIEW -->
+<!-- QUIZ DASHBOARD VIEW -->
+<section id="quizDashView" class="hidden">
+  <div class="topbar">
+    <div class="pills">
+      <span class="pillSmall" id="quizDashStudentPill"></span>
+      <span class="pillSmall" id="quizDashLangPill"></span>
+    </div>
+    <div class="actions" style="margin:0;">
+      <button id="quizDashBackBtn" class="ghost" type="button">Back</button>
+    </div>
+    
+  </div>
+
+  <h2>Quiz Dashboard</h2>
+
+  <p class="hint" id="quizDashHint"></p>
+
+  <div class="dashSummary" id="quizDashSummary"></div>
+  <div class="dashGrid" id="quizDashGrid"></div>
+</section>
+    <!-- BADGES VIEW -->
 <section id="badgesView" class="hidden">
   <div class="topbar">
     <div class="pills">
