@@ -20,8 +20,11 @@ let progress = loadProgress();
 
 let currentStudent = "";
 let selectedUnits = new Set();
+
 let queue = [];
 let idx = 0;
+
+let quizMode = false; // toggled by Quiz button
 
 let cardStartTs = null;
 
@@ -1358,9 +1361,9 @@ el("badgePopup")?.addEventListener("click", (e) => {
   el("modeStudent")?.addEventListener("click", () => showView("start"));
   el("modeTeacher")?.addEventListener("click", openTeacherDashboard);
   el("langToggleBtn")?.addEventListener("click", () => setSpanishMode(!spanishMode));
-el("quizInStudyBtn")?.addEventListener("click", () => openQuizMode());
+el("quizInStudyBtn")?.addEventListener("click", openQuizMode);
+el("quizDashBtn")?.addEventListener("click", openQuizDashboard);
 el("quizDashBackBtn")?.addEventListener("click", () => showView("study"));
-   el("quizDashBtn")?.addEventListener("click", openQuizDashboard);
    
   // Start view
   el("startBtn")?.addEventListener("click", start);
