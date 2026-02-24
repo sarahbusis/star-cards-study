@@ -1041,6 +1041,12 @@ function wireEverything(){
   el("rateClose")?.addEventListener("click", () => advance("close"));
   el("rateMiss")?.addEventListener("click", () => advance("miss"));
 
+   // Start view
+el("badgesBtn")?.addEventListener("click", openBadges);
+
+// Badges view
+el("badgesBackBtn")?.addEventListener("click", goToStart);
+   
   // Student dashboard
   el("dashBackBtn")?.addEventListener("click", goToStart);
 
