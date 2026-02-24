@@ -1064,59 +1064,73 @@ async function openBadges(){
     // ignore, keep local
   }
 
+   console.log("[badges] openBadges totals", { timeEverMs, cardsAttempted, sourceLabel });
   renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel });
   showView("badges");
 }
 function renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel }){
+  // --- Debug (remove later if you want) ---
+  console.log("[badges] render", { timeEverMs, cardsAttempted, sourceLabel, BADGES_type: typeof BADGES, BADGES_len: (typeof BADGES !== "undefined" && BADGES?.length) });
+
   const totalMin = Math.floor((Number(timeEverMs) || 0) / 60000);
   const cardsN = Number(cardsAttempted) || 0;
 
   el("badgesStudentPill") && (el("badgesStudentPill").textContent = `Student: ${currentStudent}`);
   el("badgesTotalPill") && (el("badgesTotalPill").textContent = `Total: ${totalMin} min • ${cardsN} cards`);
-  el("badgesSourcePill") && (el("badgesSourcePill").textContent = `Source: ${sourceLabel}`);
+  el("badgesSourcePill") && (el("badgesSourcePill").textContent = `Source: ${sourceLabel || ""}`);
 
-  const earned = BADGES.filter(b => totalMin >= b.minutes && cardsN >= b.cards);
-  const next = BADGES.find(b => !(totalMin >= b.minutes && cardsN >= b.cards)) || null;
+  // ✅ Guard: BADGES must exist
+  const badgeList =
+    (typeof BADGES !== "undefined" && Array.isArray(BADGES)) ? BADGES : [];
 
   const hint = el("badgesNextHint");
+  const sum = el("badgesSummary");
+  const grid = el("badgesGrid");
+  if (!grid) return;
+
+  // ✅ If BADGES is missing, show a helpful message instead of blank
+  if (!badgeList.length){
+    if (hint) hint.textContent = "No badge definitions found (BADGES array is missing).";
+    if (sum) sum.innerHTML = `<div class="summaryChip">Fix needed: BADGES is not loaded.</div>`;
+    grid.innerHTML = "";
+    return;
+  }
+
+  const earned = badgeList.filter(b => totalMin >= b.minutes && cardsN >= b.cards);
+  const next = badgeList.find(b => !(totalMin >= b.minutes && cardsN >= b.cards)) || null;
+
   if (hint){
     if (!next){
       hint.textContent = "You earned every badge! 🥳";
     } else {
       const minLeft = Math.max(0, next.minutes - totalMin);
       const cardsLeft = Math.max(0, next.cards - cardsN);
-
-      // Friendly combined message
       if (minLeft > 0 && cardsLeft > 0){
-        hint.textContent =
-          `Next badge: ${next.emoji} ${next.name} — ` +
-          `${minLeft} more min AND ${cardsLeft} more cards to go!`;
+        hint.textContent = `Next badge: ${next.emoji} ${next.name} — ${minLeft} more min AND ${cardsLeft} more cards to go!`;
       } else if (minLeft > 0){
-        hint.textContent =
-          `Next badge: ${next.emoji} ${next.name} — ` +
-          `${minLeft} more minutes to go!`;
+        hint.textContent = `Next badge: ${next.emoji} ${next.name} — ${minLeft} more minutes to go!`;
       } else {
-        hint.textContent =
-          `Next badge: ${next.emoji} ${next.name} — ` +
-          `${cardsLeft} more cards to go!`;
+        hint.textContent = `Next badge: ${next.emoji} ${next.name} — ${cardsLeft} more cards to go!`;
       }
     }
   }
 
-  const sum = el("badgesSummary");
   if (sum){
     sum.innerHTML = `
-      <div class="summaryChip">Badges earned: <b>${earned.length}</b> / ${BADGES.length}</div>
+      <div class="summaryChip">Badges earned: <b>${earned.length}</b> / ${badgeList.length}</div>
       <div class="summaryChip">Minutes studied: <b>${totalMin}</b></div>
       <div class="summaryChip">Cards attempted: <b>${cardsN}</b></div>
     `;
   }
 
-  const grid = el("badgesGrid");
-  if (!grid) return;
   grid.innerHTML = "";
 
-  for (const b of BADGES){
+  // ✅ Guard: escapeHtml fallback (prevents crash)
+  const safeEscape = (typeof escapeHtml === "function")
+    ? escapeHtml
+    : (s => String(s));
+
+  for (const b of badgeList){
     const got = (totalMin >= b.minutes && cardsN >= b.cards);
 
     const tile = document.createElement("div");
@@ -1126,7 +1140,7 @@ function renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel }){
 
     tile.innerHTML = `
       <b style="font-size:22px;">${b.emoji}</b>
-      <div style="font-weight:700;">${escapeHtml(b.name)}</div>
+      <div style="font-weight:700;">${safeEscape(b.name)}</div>
       <small>Need: ${b.minutes} min • ${b.cards} cards</small>
       <small>${got ? "Earned!" : "Not yet"}</small>
     `;
