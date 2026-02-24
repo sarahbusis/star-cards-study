@@ -932,6 +932,117 @@ function escapeHtml(str){
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
 }
+// -------- QUIZ: normalization + grading --------
+function norm(s){
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // strip accents: á->a
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokensFrom(s){
+  const t = norm(s);
+  return t ? t.split(" ") : [];
+}
+
+function textHasAny(haystackNorm, phraseNorm){
+  // phraseNorm can be multi-word; check as substring for simplicity
+  if (!phraseNorm) return false;
+  return haystackNorm.includes(phraseNorm);
+}
+
+function groupSatisfied(answerNorm, group){
+  // group is array of synonyms/phrases
+  // true if any synonym phrase appears in normalized answer
+  for (const raw of (group || [])){
+    const p = norm(raw);
+    if (!p) continue;
+    if (textHasAny(answerNorm, p)) return true;
+  }
+  return false;
+}
+
+function gradeAnswerForCard(card, studentAnswerRaw, useSpanish){
+  const langKey = useSpanish ? "sp" : "en";
+  const rubric = card?.grade?.[langKey] || null;
+
+  // If no rubric, fall back to simple similarity vs answerText
+  if (!rubric){
+    const modelAns = useSpanish ? (card.answerTextSp || card.answerText || "") : (card.answerText || "");
+    const a = norm(studentAnswerRaw);
+    const b = norm(modelAns);
+    const ok = (a && b && (a === b || (a.length >= 8 && b.includes(a)) || (b.length >= 8 && a.includes(b))));
+    return {
+      level: ok ? "correct" : "incorrect",
+      score: ok ? 1 : 0,
+      hit: [],
+      missed: [],
+      message: useSpanish ? (ok ? "Correcto." : "No todavía.") : (ok ? "Correct." : "Not yet.")
+    };
+  }
+
+  const answerNorm = norm(studentAnswerRaw);
+  const must = Array.isArray(rubric.must) ? rubric.must : [];
+  const optional = Array.isArray(rubric.optional) ? rubric.optional : [];
+  const minMust = Number(rubric.minMustGroups || Math.max(1, Math.ceil(must.length * 0.6)));
+
+  const hit = [];
+  const missed = [];
+
+  for (let i = 0; i < must.length; i++){
+    const g = must[i];
+    const ok = groupSatisfied(answerNorm, g);
+    (ok ? hit : missed).push(g);
+  }
+
+  const hits = hit.length;
+  const needed = Math.min(minMust, must.length);
+
+  // Scoring + levels (moderately strict)
+  // correct: hits >= needed
+  // almost: hits >= max(1, needed-1)
+  const correct = hits >= needed;
+  const almost = !correct && hits >= Math.max(1, needed - 1);
+
+  const level = correct ? "correct" : (almost ? "almost" : "incorrect");
+
+  // Friendly feedback message (language-aware)
+  let message = "";
+  if (useSpanish){
+    if (level === "correct") message = "¡Correcto!";
+    else if (level === "almost") message = "Casi. Te falta una idea clave.";
+    else message = "No todavía. Intenta incluir las ideas clave.";
+  } else {
+    if (level === "correct") message = "Correct!";
+    else if (level === "almost") message = "Almost. You’re missing one key idea.";
+    else message = "Not yet. Try to include the key ideas.";
+  }
+
+  // Build “missing ideas” text by showing 1–2 example keywords from missed groups
+  const missingHints = missed.slice(0, 2).map(g => {
+    // pick 1–2 representative phrases from each missed group
+    const sample = (g || []).slice(0, 2).join(" / ");
+    return sample;
+  }).filter(Boolean);
+
+  if (missingHints.length){
+    message += useSpanish
+      ? `  Pista: incluye algo como ${missingHints.join(" + ")}.`
+      : `  Hint: include something like ${missingHints.join(" + ")}.`;
+  }
+
+  return {
+    level,                       // "correct" | "almost" | "incorrect"
+    score: must.length ? (hits / must.length) : (correct ? 1 : 0),
+    hits,
+    needed,
+    hit,
+    missed,
+    message
+  };
+}
 /* ---------- Badges (minutes studied) ---------- */
 const BADGES = [
   { minutes: 5,   cards: 3,   name: "Warm-Up",         emoji: "🔥" },
@@ -1200,6 +1311,37 @@ function wireBadgePopup(){
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") hideBadgePopup();
   });
+}
+
+// -------- QUIZ: per-card stats separate from study ratings --------
+function ensureQuizCard(stu, cardId){
+  if (!stu.quizByCard) stu.quizByCard = {};
+  if (!stu.quizByCard[cardId]){
+    stu.quizByCard[cardId] = {
+      correct: 0,
+      almost: 0,
+      incorrect: 0,
+      attempts: 0,
+      lastLevel: null,
+      lastTs: 0
+    };
+  }
+  return stu.quizByCard[cardId];
+}
+
+function recordQuizResult(studentName, cardId, level){
+  ensureStudent(studentName);
+  const stu = progress.students[studentName];
+  const s = ensureQuizCard(stu, cardId);
+
+  s.attempts += 1;
+  s.lastLevel = level;
+  s.lastTs = Date.now();
+  if (level === "correct") s.correct += 1;
+  else if (level === "almost") s.almost += 1;
+  else s.incorrect += 1;
+
+  saveProgress(progress);
 }
 /* =====================================================
    ✅ WIRE EVERYTHING (matches your updated index.html)
