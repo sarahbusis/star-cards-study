@@ -353,29 +353,42 @@ function goToStart(){
 window.reveal = function reveal(){
   const answerCol = el("answerCol");
   const revealArea = el("revealArea");
-  if (!answerCol || !revealArea){
-    alert('Missing "answerCol" or "revealArea" in index.html.');
-    return;
-  }
-  if (!queue.length) return;
+  if (!answerCol || !revealArea) return;
 
+  if (!queue.length) return;
   const c = queue[idx % queue.length];
 
-  // Always show answer image + rating area
+  // Always show answer image column
   answerCol.classList.remove("hidden");
-  revealArea.classList.remove("hidden");
 
-  // Quiz grading (only if quizMode ON)
   if (window.quizMode){
+    // --- QUIZ MODE ---
+    // Hide self-rating area
+    revealArea.classList.add("hidden");
+
+    // Grade typed answer
     const typed = el("answerBox")?.value || "";
     const res = gradeAnswerForCard(c, typed, !!spanishMode);
     setQuizFeedback(res.level, res.message);
 
-    // record quiz results (separate from study)
     recordQuizResult(currentStudent, c.id, res.level);
+
+    // Swap buttons: hide Check/Skip, show Next
+    el("checkBtn")?.classList.add("hidden");
+    el("skipBtn")?.classList.add("hidden");
+    el("nextBtn")?.classList.remove("hidden");
+
   } else {
-    // Study mode: hide quiz feedback
+    // --- STUDY MODE ---
     el("quizFeedback")?.classList.add("hidden");
+
+    // Show rating choices
+    revealArea.classList.remove("hidden");
+
+    // Buttons: show Check/Skip, hide Next
+    el("checkBtn")?.classList.remove("hidden");
+    el("skipBtn")?.classList.remove("hidden");
+    el("nextBtn")?.classList.add("hidden");
   }
 };
 
@@ -478,6 +491,8 @@ function renderCard(){
   if (el("progressPill")){
     el("progressPill").textContent = `Card ${(idx % queue.length) + 1} / ${queue.length} (Unit ${c.unit})`;
   }
+  
+try { setQuizMode(window.quizMode); } catch {}
 
   // Update hint language
   const hint = el("clickReadHint");
@@ -912,7 +927,35 @@ function renderTeacherTableForSelectedStudentFromBackend(studentsObj){
     body.appendChild(tr);
   }
 }
+// ---- Quiz mode state (safe global) ----
+window.quizMode = window.quizMode ?? false;
 
+function setQuizMode(on){
+  window.quizMode = !!on;
+
+  // update toggle UI
+  const t = el("quizModeToggle");
+  if (t) t.checked = window.quizMode;
+
+  const lab = el("quizModeLabel");
+  if (lab){
+    lab.textContent = window.quizMode
+      ? (spanishMode ? "Quiz" : "Quiz")
+      : (spanishMode ? "Estudio" : "Study");
+  }
+
+  // when switching modes, reset per-card UI pieces
+  el("quizFeedback")?.classList.add("hidden");
+  el("nextBtn")?.classList.add("hidden");
+  el("checkBtn")?.classList.remove("hidden");
+  el("skipBtn")?.classList.remove("hidden");
+
+  // rating area only used in study mode
+  if (window.quizMode){
+    el("revealArea")?.classList.add("hidden");
+    el("answerCol")?.classList.add("hidden"); // keep hidden until check
+  }
+}
 /* ---------- Status helpers ---------- */
 function statusForCard(s){
   if (!s || (s.attempts || 0) === 0) return { color: "var(--gray)", label: "Not attempted" };
@@ -1597,19 +1640,39 @@ function wireEverything(){
   el("studentDashBtn")?.addEventListener("click", openStudentDashboard);
   el("badgesBtn")?.addEventListener("click", openBadges);
 
-  // ---------- Study view ----------
-  el("dashInStudyBtn")?.addEventListener("click", openStudentDashboard);
-  el("badgesInStudyBtn")?.addEventListener("click", openBadges);
- el("quizInStudyBtn")?.addEventListener("click", () => openQuizMode());
-el("quizDashBtn")?.addEventListener("click", () => openQuizDashboard());
-  el("changeBtn")?.addEventListener("click", goToStart);
+// ---------- Study view ----------
+el("dashInStudyBtn")?.addEventListener("click", openStudentDashboard);
+el("badgesInStudyBtn")?.addEventListener("click", openBadges);
 
-  el("checkBtn")?.addEventListener("click", () => { ttsStop?.(); reveal(); });
-  el("skipBtn")?.addEventListener("click", () => advance("skip"));
-  el("rateGot")?.addEventListener("click", () => advance("got"));
-  el("rateClose")?.addEventListener("click", () => advance("close"));
-  el("rateMiss")?.addEventListener("click", () => advance("miss"));
+// Home button (replaces Change units)
+el("homeBtn")?.addEventListener("click", goToStart);
 
+// Quiz mode toggle switch (replaces Quiz button)
+el("quizModeToggle")?.addEventListener("change", (e) => {
+  setQuizMode(!!e.target.checked);
+});
+
+// Check / Skip / Next
+el("checkBtn")?.addEventListener("click", () => { ttsStop?.(); reveal(); });
+el("skipBtn")?.addEventListener("click", () => advance("skip"));
+
+el("nextBtn")?.addEventListener("click", () => {
+  // After a quiz check, Next advances to the next card
+  el("quizFeedback")?.classList.add("hidden");
+
+  // restore buttons for the next card
+  el("nextBtn")?.classList.add("hidden");
+  el("checkBtn")?.classList.remove("hidden");
+  el("skipBtn")?.classList.remove("hidden");
+
+  // advance without self-rating (treated like skip)
+  advance("skip");
+});
+
+// Self-rating buttons (Study mode only; in Quiz mode the UI is hidden by reveal())
+el("rateGot")?.addEventListener("click", () => advance("got"));
+el("rateClose")?.addEventListener("click", () => advance("close"));
+el("rateMiss")?.addEventListener("click", () => advance("miss"));
   // ---------- Student dashboard ----------
   el("dashBackBtn")?.addEventListener("click", goToStart);
 
