@@ -1019,54 +1019,60 @@ function distinctCardsLocalAttempted(stu){
   return count;
 }
 async function openBadges(){
-  let name = (currentStudent || "").trim();
-  if (!name) name = (el("studentName")?.value || "").trim();
-  if (!name) return alert("Enter your name first.");
- 
-  currentStudent = name;
-  addRecentName(currentStudent);
-  renderRecentNamesSuggestions();
-  ensureStudent(currentStudent);
-
-  // Local totals (instant)
-  const localStu = progress.students[currentStudent];
-  const localTimeEverMs = totalMsLocalEverForStudent(localStu);
-  const localCardsAttempted = distinctCardsLocalAttempted(localStu);
-
-  // Defaults = local
-  let sourceLabel = "This device";
-  let timeEverMs = localTimeEverMs;
-  let cardsAttempted = localCardsAttempted;
-
-  // Backend totals (all devices) — may lag, so we take max()
   try{
-    const backendStu = await fetchBackendStudent(currentStudent);
-    if (backendStu && backendStu.ok){
-      window.__studentBackend = backendStu;
+    // 1) Get student name
+    let name = (currentStudent || "").trim();
+    if (!name) name = (el("studentName")?.value || "").trim();
+    if (!name) return alert("Enter your name first.");
 
-      const backendTime = (typeof backendStu.timeEver === "number") ? backendStu.timeEver : 0;
+    currentStudent = name;
+    addRecentName(currentStudent);
+    renderRecentNamesSuggestions();
+    ensureStudent(currentStudent);
 
-      let backendCards = 0;
-      if (typeof backendStu.cardsAttempted === "number"){
-        backendCards = backendStu.cardsAttempted;
-      } else if (backendStu.byCard && typeof backendStu.byCard === "object"){
-        backendCards = Object.values(backendStu.byCard).filter(s => (s.attempts || 0) > 0).length;
+    // 2) Local totals (instant)
+    const localStu = progress.students[currentStudent];
+    const localTimeEverMs = totalMsLocalEverForStudent(localStu);
+    const localCardsAttempted = distinctCardsLocalAttempted(localStu);
+
+    // 3) Defaults = local
+    let sourceLabel = "This device";
+    let timeEverMs = localTimeEverMs;
+    let cardsAttempted = localCardsAttempted;
+
+    // 4) Backend totals (may lag). Use max(local, backend)
+    try{
+      const backendStu = await fetchBackendStudent(currentStudent);
+      if (backendStu && backendStu.ok){
+        window.__studentBackend = backendStu;
+
+        const backendTime = (typeof backendStu.timeEver === "number") ? backendStu.timeEver : 0;
+
+        let backendCards = 0;
+        if (typeof backendStu.cardsAttempted === "number"){
+          backendCards = backendStu.cardsAttempted;
+        } else if (backendStu.byCard && typeof backendStu.byCard === "object"){
+          backendCards = Object.values(backendStu.byCard).filter(s => (s.attempts || 0) > 0).length;
+        }
+
+        timeEverMs = Math.max(localTimeEverMs, backendTime);
+        cardsAttempted = Math.max(localCardsAttempted, backendCards);
+
+        if (backendTime || backendCards) sourceLabel = "All devices (best of backend + local)";
       }
-
-      // ✅ use the best totals (prevents “badge earned but page shows none”)
-      timeEverMs = Math.max(localTimeEverMs, backendTime);
-      cardsAttempted = Math.max(localCardsAttempted, backendCards);
-
-      // Only label as all-devices if backend contributed something useful
-      if (backendTime || backendCards) sourceLabel = "All devices (best of backend + local)";
+    } catch (e){
+      console.warn("[badges] backend fetch failed; using local", e);
     }
-  } catch {
-    // ignore, keep local
-  }
 
-  console.log("[badges] openBadges totals", { timeEverMs, cardsAttempted, sourceLabel });
-  renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel });
-  showView("badges");
+    console.log("[badges] openBadges totals", { timeEverMs, cardsAttempted, sourceLabel });
+
+    // 5) Render + show
+    renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel });
+    showView("badges");
+  } catch (err){
+    console.error("[badges] openBadges crashed", err);
+    alert("Badges page error. Open Console for details.");
+  }
 }
 function renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel }){
   // --- Debug (remove later if you want) ---
@@ -1177,7 +1183,7 @@ el("badgePopup")?.addEventListener("click", (e) => {
   el("modeStudent")?.addEventListener("click", () => showView("start"));
   el("modeTeacher")?.addEventListener("click", openTeacherDashboard);
   el("langToggleBtn")?.addEventListener("click", () => setSpanishMode(!spanishMode));
-el("badgesInStudyBtn")?.addEventListener("click", openBadges);
+
   // Start view
   el("startBtn")?.addEventListener("click", start);
   el("studentDashBtn")?.addEventListener("click", openStudentDashboard);
@@ -1191,8 +1197,14 @@ el("badgesInStudyBtn")?.addEventListener("click", openBadges);
   el("rateClose")?.addEventListener("click", () => advance("close"));
   el("rateMiss")?.addEventListener("click", () => advance("miss"));
 
-   // Start view
+// Badges buttons (start + study)
 el("badgesBtn")?.addEventListener("click", openBadges);
+el("badgesInStudyBtn")?.addEventListener("click", openBadges);
+
+// Back button inside badges view
+el("badgesBackBtn")?.addEventListener("click", () => showView("start"));
+   
+
 
 // Badges view
 el("badgesBackBtn")?.addEventListener("click", goToStart);
