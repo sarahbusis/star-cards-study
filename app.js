@@ -1171,7 +1171,64 @@ function wireEverything(){
     }
   });
 }
+/* ---------- TTS (text-to-speech) ---------- */
 
+let ttsVoices = [];
+let __ttsActive = false;
+let __ttsLastKey = "";
+
+function loadTtsVoices(){
+  if (!("speechSynthesis" in window)) return;
+  ttsVoices = window.speechSynthesis.getVoices() || [];
+}
+
+function pickVoiceForLang(lang){
+  const want = (lang === "sp") ? ["es", "es-"] : ["en", "en-"];
+  return ttsVoices.find(v =>
+    want.some(p => (v.lang || "").toLowerCase().startsWith(p))
+  ) || null;
+}
+
+function ttsStop(){
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  __ttsActive = false;
+  __ttsLastKey = "";
+}
+
+function ttsSpeak(text, key){
+  if (!text) return;
+  if (!("speechSynthesis" in window)) return;
+
+  const currentlySpeaking =
+    window.speechSynthesis.speaking ||
+    window.speechSynthesis.pending;
+
+  if (currentlySpeaking && __ttsActive && __ttsLastKey === key){
+    ttsStop();
+    return;
+  }
+
+  ttsStop();
+  __ttsActive = true;
+  __ttsLastKey = key;
+
+  const u = new SpeechSynthesisUtterance(text);
+  const v = pickVoiceForLang(spanishMode ? "sp" : "en");
+  if (v) u.voice = v;
+
+  u.onend = () => {
+    __ttsActive = false;
+    __ttsLastKey = "";
+  };
+
+  u.onerror = () => {
+    __ttsActive = false;
+    __ttsLastKey = "";
+  };
+
+  window.speechSynthesis.speak(u);
+}
 /* ---------- Init ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
   try{
