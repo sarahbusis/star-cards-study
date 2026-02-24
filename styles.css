@@ -203,3 +203,37 @@ th{background:#f7f9fc}
 .keyYellow{background:var(--yellow)}
 .keyRed{background:var(--red)}
 .keyGray{background:var(--gray)}
+
+/* Toggle switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+.switch input { display:none; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #c7ced8;
+  border-radius: 999px;
+  transition: .2s;
+}
+.slider:before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: .2s;
+}
+.switch input:checked + .slider {
+  background: #2d7ef7;
+}
+.switch input:checked + .slider:before {
+  transform: translateX(20px);
+}
