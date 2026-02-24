@@ -14,6 +14,27 @@ const TEACHER_PIN = "2026";
 
 const STORAGE_KEY = "star_screenshot_progress_v3";
 
+/* ---------- Local progress storage (MUST be above State) ---------- */
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const obj = raw ? JSON.parse(raw) : null;
+    if (!obj || typeof obj !== "object") return { students:{} };
+    if (!obj.students || typeof obj.students !== "object") obj.students = {};
+    return obj;
+  } catch {
+    return { students:{} };
+  }
+}
+
+function saveProgress(obj){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  } catch (e){
+    console.warn("saveProgress failed:", e);
+  }
+}
+
 /* ---------- State ---------- */
 let cards = [];
 let progress = loadProgress();
