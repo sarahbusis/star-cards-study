@@ -1228,6 +1228,37 @@ function groupSatisfied(answerNorm, group){
 function gradeAnswerForCard(card, studentAnswerRaw, useSpanish){
   const langKey = useSpanish ? "sp" : "en";
   const rubric = card?.grade?.[langKey] || null;
+     // --- Optional rule: require specific numbers/phrases in order (per-card) ---
+  // Example: orderNumbers: ["12","3","16","1000"]
+  if (rubric && Array.isArray(rubric.orderNumbers) && rubric.orderNumbers.length){
+    const answerNorm = norm(studentAnswerRaw);
+
+    let lastIndex = -1;
+    let okOrder = true;
+
+    for (const rawNeedle of rubric.orderNumbers){
+      const needle = norm(rawNeedle);
+      const idx = answerNorm.indexOf(needle);
+
+      if (idx === -1 || idx < lastIndex){
+        okOrder = false;
+        break;
+      }
+      lastIndex = idx;
+    }
+
+    if (!okOrder){
+      return {
+        level: "incorrect",
+        score: 0,
+        hit: [],
+        missed: [],
+        message: useSpanish
+          ? "No todavía. Asegúrate de escribir los números en este orden: 12, 3, 16, 1000."
+          : "Not yet. Make sure the numbers are in this order: 12, 3, 16, 1000."
+      };
+    }
+  }
 
   if (!rubric){
     const modelAns = useSpanish ? (card.answerTextSp || card.answerText || "") : (card.answerText || "");
