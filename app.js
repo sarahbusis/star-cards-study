@@ -957,13 +957,19 @@ function showBadgePopup(badge, totals){
     `You reached ${totals.minutes} minutes and ${totals.cards} cards attempted. Keep going!`
   );
 
+  // ✅ Bulletproof show (doesn't rely on .hidden CSS)
+  pop.style.display = "flex";
   pop.classList.remove("hidden");
 }
 
 function hideBadgePopup(){
-  el("badgePopup")?.classList.add("hidden");
-}
+  const pop = el("badgePopup");
+  if (!pop) return;
 
+  // ✅ Bulletproof hide
+  pop.style.display = "none";
+  pop.classList.add("hidden");
+}
 function totalMsLocalEverForStudent(stu){
   if (!stu || !stu.byCard) return 0;
   let total = 0;
@@ -1121,6 +1127,21 @@ function renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel }){
     grid.appendChild(tile);
   }
 }
+
+function wireBadgePopup(){
+  // Close button
+  el("badgePopupCloseBtn")?.addEventListener("click", hideBadgePopup);
+
+  // Click outside the modal closes
+  el("badgePopup")?.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "badgePopup") hideBadgePopup();
+  });
+
+  // ESC key closes
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") hideBadgePopup();
+  });
+}
 /* =====================================================
    ✅ WIRE EVERYTHING (matches your updated index.html)
    ===================================================== */
@@ -1171,6 +1192,7 @@ el("badgesBackBtn")?.addEventListener("click", goToStart);
   });
 }
 
+wireBadgePopup();
 /* ---------- Init ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
   try{
@@ -1179,7 +1201,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadTtsVoices();
       window.speechSynthesis.onvoiceschanged = loadTtsVoices;
     }
-
+hideBadgePopup();
     renderRecentNamesSuggestions();
     setSpanishMode(spanishMode);
 
