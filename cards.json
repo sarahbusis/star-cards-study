@@ -151,7 +151,7 @@
     "qsp": "assets/5bQsp.png",
     "asp": "assets/5bAsp.png",
     "text": "Explain how you would round these numbers.",
-    "answerText": "To round 82.7 to the ones place, look at the tenths digit. To round 8.562 to the hundredths place, look at the thousandths digit.",
+    "answerText": "To round 82.7 to the ones place, look at the tenths digit. Because 7 is more than 5, round the ones place up to 3. To round 8.562 to the hundredths place, look at the thousandths digit. Because 2 is less than 5, cut it off and leave the 6 in the hundreths place.",
     "textSp": "Explica cómo redondearías estos números.",
     "answerTextSp": "Para redondear 82.7 al lugar de las unidades, observa el número en la posición de los décimos. Para redondear 8.562 al lugar de las centésimas, observa el número en la posición de los milésimos y decide si debes redondear."
   },
@@ -162,8 +162,8 @@
     "a": "assets/5cA.png",
     "qsp": "assets/5cQsp.png",
     "asp": "assets/5cAsp.png",
-    "text": "List the order of operations. When do you use it?",
-    "answerText": "Parentheses, exponents, multiply and divide from left to right, add and subtract from left to right. Use it when a problem has more than one operation.",
+    "text": "List the order of operations. When do you use the order of operation?",
+    "answerText": "Parentheses, exponents, multiplication and division from left to right, addition and subtraction from left to right. Use the order of operations when a problem has more than one operation.",
     "textSp": "Enumera el orden de operaciones. ¿Cuándo se usa el orden de operaciones?",
     "answerTextSp": "Paréntesis. Exponentes. Multiplicación y división de izquierda a derecha. Suma y resta de izquierda a derecha. Se usa el orden de operaciones cuando un problema tiene más de una operación."
   },
@@ -187,7 +187,7 @@
     "qsp": "assets/6bQsp.png",
     "asp": "assets/6bAsp.png",
     "text": "Fill in the missing values between normal form and exponential form.",
-    "answerText": "10,000 = 10^4. 1,000 = 10^3. 1,000,000,000 = 10^9.",
+    "answerText": "10,000 = 10 to the fourth power. 1,000 = 10 to the third power. 1,000,000,000 = 10 to the ninth power.",
     "textSp": "Encuentra el valor que falta entre la forma numérica y la forma exponencial.",
     "answerTextSp": "Diez mil es igual a diez a la cuarta potencia. Mil es igual a diez a la tercera potencia. Mil millones es igual a diez a la novena potencia."
   },
