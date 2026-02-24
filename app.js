@@ -189,10 +189,36 @@ function goToStart(){
   ttsStop();
 }
 
-function reveal(){
-  el("answerCol")?.classList.remove("hidden");
-  el("revealArea")?.classList.remove("hidden");
-}
+window.reveal = function reveal(){
+  const answerCol = el("answerCol");
+  const revealArea = el("revealArea");
+  if (!answerCol || !revealArea){
+    alert('Missing "answerCol" or "revealArea" in index.html.');
+    return;
+  }
+  if (!queue.length) return;
+
+  const c = queue[idx % queue.length];
+
+  // Always show answer image + rating area
+  answerCol.classList.remove("hidden");
+  revealArea.classList.remove("hidden");
+
+  // Quiz grading (only if quizMode ON)
+  if (quizMode){
+    const typed = el("answerBox")?.value || "";
+    const res = gradeAnswerForCard(c, typed, !!spanishMode);
+    setQuizFeedback(res.level, res.message);
+
+    // record quiz results (separate from study)
+    recordQuizResult(currentStudent, c.id, res.level);
+  } else {
+    // Study mode: hide quiz feedback
+    el("quizFeedback")?.classList.add("hidden");
+  }
+};
+
+
 
 function advance(mode){
   ttsStop();
@@ -1346,6 +1372,49 @@ function recordQuizResult(studentName, cardId, level){
   else s.incorrect += 1;
 
   saveProgress(progress);
+// ===============================
+// QUIZ MODE TOGGLE + FEEDBACK UI
+// ===============================
+let quizMode = false; // top-level flag
+
+function openQuizMode(){
+  quizMode = !quizMode;
+
+  const btn = el("quizInStudyBtn");
+  if (btn){
+    // When quizMode ON, button shows "Study"/"Estudio" so kids know how to toggle back
+    btn.textContent = quizMode
+      ? (spanishMode ? "Estudio" : "Study")
+      : "Quiz";
+  }
+
+  // Hide old quiz feedback when toggling
+  el("quizFeedback")?.classList.add("hidden");
+
+  // Optional: if answer/reveal is currently open, keep it as-is
+  // (no navigation changes here)
+}
+
+function setQuizFeedback(level, message){
+  const box = el("quizFeedback");
+  const verdict = el("quizVerdict");
+  const msg = el("quizMessage");
+  if (!box || !verdict || !msg) return;
+
+  const sp = !!spanishMode;
+
+  if (level === "correct"){
+    verdict.textContent = sp ? "¡Correcto!" : "Correct!";
+  } else if (level === "almost"){
+    verdict.textContent = sp ? "Casi" : "Almost";
+  } else {
+    verdict.textContent = sp ? "Incorrecto" : "Incorrect";
+  }
+
+  msg.textContent = message || "";
+  box.classList.remove("hidden");
+}
+   
 }/* =====================================================
    ✅ WIRE EVERYTHING (matches your updated index.html)
    ===================================================== */
