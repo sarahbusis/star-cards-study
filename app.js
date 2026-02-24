@@ -28,6 +28,15 @@ let idx = 0;
 
 let cardStartTs = null;
 
+// --- Safety shims so wiring doesn't crash the whole app ---
+window.openDashboardDefault = window.openDashboardDefault || function(){
+  if (typeof openStudentDashboard === "function") openStudentDashboard();
+};
+window.setDashboardMode = window.setDashboardMode || function(){};
+window.openQuizDashboard = window.openQuizDashboard || function(){
+  alert("Quiz dashboard isn't installed yet.");
+};
+
 /* ---------- DOM helper ---------- */
 function el(id){
   return document.getElementById(id);
