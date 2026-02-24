@@ -989,6 +989,44 @@ function setQuizMode(on){
     el("answerCol")?.classList.add("hidden"); // keep hidden until check
   }
 }
+// ===============================
+// BADGE POPUP (bulletproof)
+// ===============================
+function hideBadgePopup(){
+  const p = el("badgePopup");
+  if (!p) return;
+  p.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function showBadgePopup({ emoji="🏆", title=null, body="" } = {}){
+  const p = el("badgePopup");
+  if (!p) return;
+
+  el("badgePopupEmoji") && (el("badgePopupEmoji").textContent = emoji);
+  el("badgePopupTitle") && (el("badgePopupTitle").textContent =
+    title || (spanishMode ? "¡Insignia ganada!" : "Badge earned!")
+  );
+  el("badgePopupBody") && (el("badgePopupBody").textContent = body);
+
+  p.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function wireBadgePopup(){
+  // Close button
+  el("badgePopupCloseBtn")?.addEventListener("click", hideBadgePopup);
+
+  // Click outside the card closes
+  el("badgePopup")?.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "badgePopup") hideBadgePopup();
+  });
+
+  // Escape key closes
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") hideBadgePopup();
+  });
+}
 /* ---------- Status helpers ---------- */
 function statusForCard(s){
   if (!s || (s.attempts || 0) === 0) return { color: "var(--gray)", label: "Not attempted" };
@@ -1747,7 +1785,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadTtsVoices();
       window.speechSynthesis.onvoiceschanged = loadTtsVoices;
     }
-hideBadgePopup();
+wireBadgePopup();
+     hideBadgePopup();
     renderRecentNamesSuggestions();
     setSpanishMode(spanishMode);
 
