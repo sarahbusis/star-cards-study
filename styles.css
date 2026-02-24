@@ -302,3 +302,6 @@ th{background:#f7f9fc}
   background: white;
   box-shadow: 0 1px 6px rgba(0,0,0,0.10);
 }
+/* Ensure segmented toggle is clickable */
+.segToggle, .segBtn { pointer-events: auto; }
+.topbar, .actions, .pills { pointer-events: auto; }
