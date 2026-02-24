@@ -1488,6 +1488,21 @@ function renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel }){
   }
 }
 
+function wireSegToggle(){
+  // Event delegation so it works even if elements re-render
+  document.addEventListener("click", (e) => {
+    const studyBtn = e.target.closest("#segStudyBtn");
+    const quizBtn  = e.target.closest("#segQuizBtn");
+
+    if (studyBtn){
+      setQuizMode(false);
+    }
+    if (quizBtn){
+      setQuizMode(true);
+    }
+  }, true); // capture = true helps if something is swallowing bubbling
+}
+
 /* =====================================================
    WIRE EVERYTHING
    ===================================================== */
@@ -1569,8 +1584,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await loadCards();
     buildUnitUI();
-
+    
+    wireSegToggle();
     wireEverything();
+     
     showView("start");
 
     console.log("[init] ready");
