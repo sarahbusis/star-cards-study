@@ -7,22 +7,21 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
- <header class="header">
-  <h1>5th Grade Math STAR Cards </h1>
- <!-- Persistent Top Bar -->
-<div id="topBar" class="topBar">
-  <button id="modeStudent" class="modebtn" type="button">Student Mode</button>
-  <button id="modeTeacher" class="modebtn" type="button">Teacher Dashboard</button>
 
-  <span class="topBarSpacer"></span>
+  <header class="header">
+    <h1>5th Grade Math STAR Cards</h1>
 
-  <!-- Language toggle as a mode-style button -->
-  <button id="langToggleBtn" class="modebtn" type="button" title="Switch language">
-    Español
-  </button>
-</div>
-  </div>
-</header>
+    <!-- Persistent Top Bar -->
+    <div id="topBar" class="topBar">
+      <button id="modeStudent" class="modebtn" type="button">Student Mode</button>
+      <button id="modeTeacher" class="modebtn" type="button">Teacher Dashboard</button>
+
+      <span class="topBarSpacer"></span>
+
+      <!-- Language toggle button (label will swap Español / English in app.js) -->
+      <button id="langToggleBtn" class="modebtn" type="button" title="Switch language">Español</button>
+    </div>
+  </header>
 
   <main class="card">
 
@@ -30,7 +29,7 @@
     <section id="startView">
       <h2>Enter your name</h2>
       <input id="studentName" list="recentStudents" autocomplete="off" placeholder="Type your name...">
-<datalist id="recentStudents"></datalist>
+      <datalist id="recentStudents"></datalist>
 
       <h2>Select unit(s) to study</h2>
       <div id="unitGrid" class="unitGrid"></div>
@@ -38,24 +37,18 @@
       <div class="toggles">
         <label class="pill"><input type="checkbox" id="shuffleToggle" checked> Shuffle</label>
         <label class="pill"><input type="checkbox" id="onlyNeedsToggle"> Only ~ / ✗ (needs practice)</label>
-      
       </div>
 
       <div class="actions">
-       <button id="startBtn" class="primary" type="button">Start</button>
-<button id="studentDashBtn" class="ghost" type="button">My Dashboard</button>
+        <button id="startBtn" class="primary" type="button">Start</button>
+        <button id="studentDashBtn" class="ghost" type="button">My Dashboard</button>
       </div>
-
-      
     </section>
 
     <!-- STUDENT: STUDY -->
     <section id="studyView" class="hidden">
+
       <div class="topbar">
-<div class="row" style="justify-content:center; gap:12px; margin:10px 0;">
-  <label style="display:flex; align-items:center; gap:8px;">
-   
-        
         <div class="pills">
           <span class="pillSmall" id="studentPill"></span>
           <span class="pillSmall" id="unitPill"></span>
@@ -63,8 +56,8 @@
           <span class="pillSmall" id="progressPill"></span>
         </div>
         <div class="actions" style="margin:0;">
-          <button id="dashInStudyBtn" class="ghost" onclick="openStudentDashboard()">My Dashboard</button>
-          <button id="changeBtn" class="ghost" onclick="goToStart()">Change units</button>
+          <button id="dashInStudyBtn" class="ghost" type="button">My Dashboard</button>
+          <button id="changeBtn" class="ghost" type="button">Change units</button>
         </div>
       </div>
 
@@ -74,8 +67,8 @@
         <div class="imgCol">
           <h3 class="imgTitle">Question</h3>
           <div id="clickReadHint" class="hint" style="margin:6px 0;">
-  Click the card to read aloud.
-</div>
+            Click the card to read aloud.
+          </div>
           <img id="questionImg" alt="Question screenshot">
         </div>
 
@@ -88,88 +81,87 @@
       <textarea id="answerBox" rows="3" placeholder="Type your answer here..."></textarea>
 
       <div class="actions">
-        <button id="checkBtn" class="primary" onclick="reveal()">Check</button>
-        <button id="skipBtn" class="ghost" onclick="advance('skip')">Skip</button>
+        <button id="checkBtn" class="primary" type="button">Check</button>
+        <button id="skipBtn" class="ghost" type="button">Skip</button>
       </div>
 
       <section id="revealArea" class="hidden">
         <p class="screenTitle">Rate yourself</p>
         <div class="actions">
-          <button id="rateGot" class="ok" onclick="advance('got')">✓ Got it</button>
-          <button id="rateClose" class="warn" onclick="advance('close')">~ Close</button>
-          <button id="rateMiss" class="danger" onclick="advance('miss')">✗ Need practice</button>
+          <button id="rateGot" class="ok" type="button">✓ Got it</button>
+          <button id="rateClose" class="warn" type="button">~ Close</button>
+          <button id="rateMiss" class="danger" type="button">✗ Need practice</button>
         </div>
       </section>
 
       <p class="stats" id="cardStats"></p>
     </section>
 
-   <!-- STUDENT DASHBOARD -->
-<section id="studentDashView" class="hidden">
-  <div class="topbar">
-    <div class="pills">
-      <span class="pillSmall" id="dashStudentPill"></span>
-      <span class="pillSmall" id="dashLangPill"></span>
-      <span class="pillSmall" id="dashWeekPill"></span>
-    </div>
-    <div class="actions" style="margin:0;">
-      <button class="ghost" onclick="goToStart()">Back</button>
-    </div>
-  </div>
+    <!-- STUDENT DASHBOARD -->
+    <section id="studentDashView" class="hidden">
+      <div class="topbar">
+        <div class="pills">
+          <span class="pillSmall" id="dashStudentPill"></span>
+          <span class="pillSmall" id="dashLangPill"></span>
+          <span class="pillSmall" id="dashWeekPill"></span>
+        </div>
+        <div class="actions" style="margin:0;">
+          <button id="dashBackBtn" class="ghost" type="button">Back</button>
+        </div>
+      </div>
 
-  <h2>My Dashboard</h2>
+      <h2>My Dashboard</h2>
 
-  <p class="hint">
-    Key:
-    <span class="keyBox keyGreen"></span> ✓ Got it,
-    <span class="keyBox keyYellow"></span> ~ Close,
-    <span class="keyBox keyRed"></span> ✗ Need practice,
-    <span class="keyBox keyGray"></span> Not yet
-  </p>
+      <p class="hint">
+        Key:
+        <span class="keyBox keyGreen"></span> ✓ Got it,
+        <span class="keyBox keyYellow"></span> ~ Close,
+        <span class="keyBox keyRed"></span> ✗ Need practice,
+        <span class="keyBox keyGray"></span> Not yet
+      </p>
 
-  <div class="dashSummary" id="dashSummary"></div>
-  <div class="dashGrid" id="dashGrid"></div>
-</section> 
+      <div class="dashSummary" id="dashSummary"></div>
+      <div class="dashGrid" id="dashGrid"></div>
+    </section>
 
     <!-- TEACHER -->
     <section id="teacherView" class="hidden">
-  <h2>Teacher dashboard (all devices)</h2>
-  <p class="hint">
-    This dashboard pulls from the shared backend (Google Sheet). If the backend is offline, it will fall back to this device.
-  </p>
+      <h2>Teacher dashboard (all devices)</h2>
+      <p class="hint">
+        This dashboard pulls from the shared backend (Google Sheet). If the backend is offline, it will fall back to this device.
+      </p>
 
-  <div class="row">
-    <div class="panel">
-      <h3>Pick a student</h3>
-      <select id="studentSelect"></select>
-    </div>
-  </div>
+      <div class="row">
+        <div class="panel">
+          <h3>Pick a student</h3>
+          <select id="studentSelect"></select>
+        </div>
+      </div>
 
-  <div id="teacherSummary" class="dashSummary"></div>
+      <div id="teacherSummary" class="dashSummary"></div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Card</th>
-        <th>Unit</th>
-        <th>Status</th>
-        <th>✓</th>
-        <th>~</th>
-        <th>✗</th>
-        <th>Attempts</th>
-        <th>Total Time</th>
-        <th>This Week</th>
-        <th>Avg / Attempt</th>
-      </tr>
-    </thead>
-    <tbody id="teacherTable"></tbody>
-  </table>
+      <table>
+        <thead>
+          <tr>
+            <th>Card</th>
+            <th>Unit</th>
+            <th>Status</th>
+            <th>✓</th>
+            <th>~</th>
+            <th>✗</th>
+            <th>Attempts</th>
+            <th>Total Time</th>
+            <th>This Week</th>
+            <th>Avg / Attempt</th>
+          </tr>
+        </thead>
+        <tbody id="teacherTable"></tbody>
+      </table>
 
-  <p class="hint">
-    Note: Export/Import/Reset were for local-only storage; the shared backend is the Google Sheet.
-  </p>
-</section>
-  
+      <p class="hint">
+        Note: Export/Import/Reset were for local-only storage; the shared backend is the Google Sheet.
+      </p>
+    </section>
 
   </main>
 
