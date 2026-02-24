@@ -1163,7 +1163,7 @@ el("badgePopup")?.addEventListener("click", (e) => {
   el("modeStudent")?.addEventListener("click", () => showView("start"));
   el("modeTeacher")?.addEventListener("click", openTeacherDashboard);
   el("langToggleBtn")?.addEventListener("click", () => setSpanishMode(!spanishMode));
-
+el("badgesInStudyBtn")?.addEventListener("click", openBadges);
   // Start view
   el("startBtn")?.addEventListener("click", start);
   el("studentDashBtn")?.addEventListener("click", openStudentDashboard);
