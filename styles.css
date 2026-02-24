@@ -237,3 +237,4 @@ th{background:#f7f9fc}
 .switch input:checked + .slider:before {
   transform: translateX(20px);
 }
+.hidden { display: none !important; }
