@@ -256,3 +256,49 @@ th{background:#f7f9fc}
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
   text-align: center;
 }
+/* =========================
+   Study header cleanup
+   ========================= */
+
+.studyHeaderActions{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+/* Make the right-side buttons feel like “tiles” */
+.studyHeaderActions .ghost{
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* =========================
+   Segmented Study/Quiz toggle
+   ========================= */
+
+.segToggle{
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px;
+  background: rgba(0,0,0,0.06);
+  gap: 4px;
+}
+
+.segBtn{
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 800;
+  cursor: pointer;
+  background: transparent;
+}
+
+.segBtn.active{
+  background: white;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.10);
+}
