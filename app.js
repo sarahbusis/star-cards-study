@@ -1028,33 +1028,40 @@ async function openBadges(){
   renderRecentNamesSuggestions();
   ensureStudent(currentStudent);
 
-  // Local fallback
+  // Local totals (instant)
   const localStu = progress.students[currentStudent];
-  let sourceLabel = "This device";
-  let timeEverMs = totalMsLocalEverForStudent(localStu);
-  let cardsAttempted = distinctCardsLocalAttempted(localStu);
+  const localTimeEverMs = totalMsLocalEverForStudent(localStu);
+  const localCardsAttempted = distinctCardsLocalAttempted(localStu);
 
-  // Backend preferred (all devices)
+  // Defaults = local
+  let sourceLabel = "This device";
+  let timeEverMs = localTimeEverMs;
+  let cardsAttempted = localCardsAttempted;
+
+  // Backend totals (all devices) — may lag, so we take max()
   try{
     const backendStu = await fetchBackendStudent(currentStudent);
     if (backendStu && backendStu.ok){
       window.__studentBackend = backendStu;
 
-      if (typeof backendStu.timeEver === "number") {
-        timeEverMs = backendStu.timeEver;
-        sourceLabel = "All devices";
-      }
-      if (typeof backendStu.cardsAttempted === "number") {
-        cardsAttempted = backendStu.cardsAttempted;
-        sourceLabel = "All devices";
+      const backendTime = (typeof backendStu.timeEver === "number") ? backendStu.timeEver : 0;
+
+      let backendCards = 0;
+      if (typeof backendStu.cardsAttempted === "number"){
+        backendCards = backendStu.cardsAttempted;
       } else if (backendStu.byCard && typeof backendStu.byCard === "object"){
-        // derive from backend byCard if not explicitly provided
-        cardsAttempted = Object.values(backendStu.byCard).filter(s => (s.attempts || 0) > 0).length;
-        sourceLabel = "All devices";
+        backendCards = Object.values(backendStu.byCard).filter(s => (s.attempts || 0) > 0).length;
       }
+
+      // ✅ use the best totals (prevents “badge earned but page shows none”)
+      timeEverMs = Math.max(localTimeEverMs, backendTime);
+      cardsAttempted = Math.max(localCardsAttempted, backendCards);
+
+      // Only label as all-devices if backend contributed something useful
+      if (backendTime || backendCards) sourceLabel = "All devices (best of backend + local)";
     }
-  } catch (e){
-    // ignore; use local
+  } catch {
+    // ignore, keep local
   }
 
   renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel });
