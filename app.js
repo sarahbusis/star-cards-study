@@ -35,6 +35,13 @@ function showView(which){
   el("startView")?.classList.toggle("hidden", which !== "start");
   el("studyView")?.classList.toggle("hidden", which !== "study");
   el("studentDashView")?.classList.toggle("hidden", which !== "studentDash");
+   function showView(which){
+  el("startView")?.classList.toggle("hidden", which !== "start");
+  el("studyView")?.classList.toggle("hidden", which !== "study");
+  el("studentDashView")?.classList.toggle("hidden", which !== "studentDash");
+  el("badgesView")?.classList.toggle("hidden", which !== "badges");   // <-- add this
+  el("teacherView")?.classList.toggle("hidden", which !== "teacher");
+}
   el("teacherView")?.classList.toggle("hidden", which !== "teacher");
 }
 
@@ -898,7 +905,120 @@ function escapeHtml(str){
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
 }
+/* ---------- Badges (minutes studied) ---------- */
+const BADGES = [
+  { minutes: 5,   name: "Warm-Up",        emoji: "🔥" },
+  { minutes: 15,  name: "Getting Started",emoji: "⭐" },
+  { minutes: 30,  name: "Half-Hour Hero", emoji: "🦸" },
+  { minutes: 60,  name: "One-Hour Champ", emoji: "🏆" },
+  { minutes: 120, name: "Study Streaker", emoji: "⚡" },
+  { minutes: 240, name: "Focused Fox",    emoji: "🦊" },
+  { minutes: 500, name: "STAR Master",    emoji: "👑" },
+];
 
+function totalMsLocalEverForStudent(stu){
+  if (!stu || !stu.byCard) return 0;
+  let total = 0;
+  for (const id in stu.byCard){
+    total += Number(stu.byCard[id]?.timeMs || 0);
+  }
+  return total;
+}
+
+function formatMinutesFromMs(ms){
+  const mins = Math.floor((Number(ms) || 0) / 60000);
+  return `${mins} min`;
+}
+
+async function openBadges(){
+  // Ensure we have a student
+  let name = (currentStudent || "").trim();
+  if (!name) name = (el("studentName")?.value || "").trim();
+  if (!name) return alert("Enter your name first.");
+
+  currentStudent = name;
+  addRecentName(currentStudent);
+  renderRecentNamesSuggestions();
+  ensureStudent(currentStudent);
+
+  // Try backend totals (all devices)
+  let sourceLabel = "This device";
+  let timeEverMs = totalMsLocalEverForStudent(progress.students[currentStudent]);
+
+  try{
+    const backendStu = await fetchBackendStudent(currentStudent);
+    if (backendStu && backendStu.ok){
+      // backend includes timeEver at the student level in our backend design
+      if (typeof backendStu.timeEver === "number"){
+        timeEverMs = backendStu.timeEver;
+        sourceLabel = "All devices";
+      }
+      // keep it cached for other pages too
+      window.__studentBackend = backendStu;
+    }
+  } catch (e){
+    // ignore; fall back to local
+  }
+
+  renderBadgesPage(timeEverMs, sourceLabel);
+  showView("badges");
+}
+
+function renderBadgesPage(timeEverMs, sourceLabel){
+  const totalMin = Math.floor((Number(timeEverMs) || 0) / 60000);
+
+  el("badgesStudentPill") && (el("badgesStudentPill").textContent = `Student: ${currentStudent}`);
+  el("badgesTotalPill") && (el("badgesTotalPill").textContent = `Total: ${totalMin} min`);
+  el("badgesSourcePill") && (el("badgesSourcePill").textContent = `Source: ${sourceLabel}`);
+
+  // Earned badges
+  const earned = BADGES.filter(b => totalMin >= b.minutes);
+  const next = BADGES.find(b => totalMin < b.minutes) || null;
+
+  // Next badge hint
+  const hint = el("badgesNextHint");
+  if (hint){
+    if (!next){
+      hint.textContent = "You earned every badge! 🥳";
+    } else {
+      const left = next.minutes - totalMin;
+      hint.textContent = `Next badge: ${next.emoji} ${next.name} at ${next.minutes} min — only ${left} min to go!`;
+    }
+  }
+
+  // Summary chips
+  const sum = el("badgesSummary");
+  if (sum){
+    sum.innerHTML = `
+      <div class="summaryChip">Badges earned: <b>${earned.length}</b> / ${BADGES.length}</div>
+      <div class="summaryChip">Minutes studied: <b>${totalMin}</b></div>
+    `;
+  }
+
+  // Badge grid
+  const grid = el("badgesGrid");
+  if (!grid) return;
+
+  grid.innerHTML = "";
+
+  for (const b of BADGES){
+    const got = totalMin >= b.minutes;
+
+    const tile = document.createElement("div");
+    tile.className = "dashCard";
+    tile.style.background = got ? "var(--green)" : "var(--gray)";
+    tile.style.opacity = got ? "1" : "0.6";
+
+    tile.innerHTML = `
+      <b style="font-size:22px;">${b.emoji}</b>
+      <div style="font-weight:700;">${escapeHtml(b.name)}</div>
+      <small>${b.minutes} min</small>
+      <small>${got ? "Earned!" : "Not yet"}</small>
+    `;
+
+    grid.appendChild(tile);
+  }
+}
 /* =====================================================
    ✅ WIRE EVERYTHING (matches your updated index.html)
    ===================================================== */
