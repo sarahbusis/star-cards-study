@@ -61,30 +61,31 @@ window.quizMode = window.quizMode ?? false;
 function setQuizMode(on){
   window.quizMode = !!on;
 
-  // Sync toggle UI
-  const t = el("quizModeToggle");
-  if (t) t.checked = window.quizMode;
+  // Sync segmented UI (new)
+  const studyBtn = el("segStudyBtn");
+  const quizBtn  = el("segQuizBtn");
+  if (studyBtn && quizBtn){
+    const isQuiz = window.quizMode;
+    studyBtn.classList.toggle("active", !isQuiz);
+    quizBtn.classList.toggle("active", isQuiz);
 
-  const lab = el("quizModeLabel");
-  if (lab){
-    lab.textContent = window.quizMode
-      ? "Quiz"
-      : (spanishMode ? "Estudio" : "Study");
+    // Language labels
+    studyBtn.textContent = spanishMode ? "📘 Modo estudio" : "📘 Study mode";
+    quizBtn.textContent  = spanishMode ? "📝 Modo quiz"   : "📝 Quiz mode";
   }
 
-  // Reset per-card UI pieces when switching modes
+  // when switching modes, reset per-card UI pieces
   el("quizFeedback")?.classList.add("hidden");
   el("nextBtn")?.classList.add("hidden");
   el("checkBtn")?.classList.remove("hidden");
   el("skipBtn")?.classList.remove("hidden");
 
-  // In quiz mode we hide rating area until next card
+  // rating area only used in study mode
   if (window.quizMode){
     el("revealArea")?.classList.add("hidden");
-    el("answerCol")?.classList.add("hidden");
+    el("answerCol")?.classList.add("hidden"); // keep hidden until check
   }
 }
-
 /* ---------- Quiz feedback box ---------- */
 function setQuizFeedback(level, message){
   const box = el("quizFeedback");
@@ -210,6 +211,7 @@ function setSpanishMode(on){
   try { renderCard(); } catch {}
   try { renderStudentDashboard(); } catch {}
   try { renderQuizDashboard(); } catch {}
+   try { setQuizMode(window.quizMode); } catch {}
 }
 
 /* =====================================================
@@ -1510,10 +1512,9 @@ function wireEverything(){
   el("dashInStudyBtn")?.addEventListener("click", openDashboardDefault);
   el("badgesInStudyBtn")?.addEventListener("click", openBadges);
   el("homeBtn")?.addEventListener("click", goToStart);
-
-  el("quizModeToggle")?.addEventListener("change", (e) => {
-    setQuizMode(!!e.target.checked);
-  });
+// Segmented Study/Quiz buttons
+el("segStudyBtn")?.addEventListener("click", () => setQuizMode(false));
+el("segQuizBtn")?.addEventListener("click", () => setQuizMode(true));
 
   el("checkBtn")?.addEventListener("click", () => { ttsStop(); window.reveal(); });
   el("skipBtn")?.addEventListener("click", () => advance("skip"));
