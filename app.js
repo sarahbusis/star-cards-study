@@ -1020,27 +1020,42 @@ function distinctCardsLocalAttempted(stu){
 }
 async function openBadges(){
   try{
-    // 1) Get student name
+    // Always switch to badges view immediately (so it never “looks like nothing happened”)
+    showView("badges");
+
+    // If we don't have a name, show a friendly message on the badges page
     let name = (currentStudent || "").trim();
     if (!name) name = (el("studentName")?.value || "").trim();
-    if (!name) return alert("Enter your name first.");
 
+    if (!name){
+      // Populate badges page with a prompt instead of leaving it blank
+      currentStudent = "";
+      el("badgesStudentPill") && (el("badgesStudentPill").textContent = "Student: (enter your name first)");
+      el("badgesTotalPill") && (el("badgesTotalPill").textContent = "");
+      el("badgesSourcePill") && (el("badgesSourcePill").textContent = "");
+      el("badgesNextHint") && (el("badgesNextHint").textContent = "Go back and type your name to see your badges.");
+      el("badgesSummary") && (el("badgesSummary").innerHTML = `<div class="summaryChip">No student selected</div>`);
+      el("badgesGrid") && (el("badgesGrid").innerHTML = "");
+      console.log("[badges] opened with no name -> showing prompt");
+      return;
+    }
+
+    // Normal flow
     currentStudent = name;
     addRecentName(currentStudent);
     renderRecentNamesSuggestions();
     ensureStudent(currentStudent);
 
-    // 2) Local totals (instant)
+    // Local totals (instant)
     const localStu = progress.students[currentStudent];
     const localTimeEverMs = totalMsLocalEverForStudent(localStu);
     const localCardsAttempted = distinctCardsLocalAttempted(localStu);
 
-    // 3) Defaults = local
     let sourceLabel = "This device";
     let timeEverMs = localTimeEverMs;
     let cardsAttempted = localCardsAttempted;
 
-    // 4) Backend totals (may lag). Use max(local, backend)
+    // Backend (best-of backend+local)
     try{
       const backendStu = await fetchBackendStudent(currentStudent);
       if (backendStu && backendStu.ok){
@@ -1064,11 +1079,9 @@ async function openBadges(){
       console.warn("[badges] backend fetch failed; using local", e);
     }
 
-    console.log("[badges] openBadges totals", { timeEverMs, cardsAttempted, sourceLabel });
+    console.log("[badges] totals", { currentStudent, timeEverMs, cardsAttempted, sourceLabel });
 
-    // 5) Render + show
     renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel });
-    showView("badges");
   } catch (err){
     console.error("[badges] openBadges crashed", err);
     alert("Badges page error. Open Console for details.");
