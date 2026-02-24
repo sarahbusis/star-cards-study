@@ -1178,7 +1178,7 @@ function wireEverything(){
 el("badgePopup")?.addEventListener("click", (e) => {
   if (e.target && e.target.id === "badgePopup") hideBadgePopup(); // click outside closes
 });
-   
+   el("badgesInStudyBtn")?.addEventListener("click", () => console.log("BADGES BUTTON CLICKED"));
   // Header buttons
   el("modeStudent")?.addEventListener("click", () => showView("start"));
   el("modeTeacher")?.addEventListener("click", openTeacherDashboard);
