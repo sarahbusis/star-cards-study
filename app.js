@@ -975,18 +975,18 @@ window.quizMode = window.quizMode ?? false;
 function setQuizMode(on){
   window.quizMode = !!on;
 
-  // update toggle UI
+  // sync toggle UI
   const t = el("quizModeToggle");
   if (t) t.checked = window.quizMode;
 
   const lab = el("quizModeLabel");
   if (lab){
     lab.textContent = window.quizMode
-      ? (spanishMode ? "Quiz" : "Quiz")
+      ? "Quiz"
       : (spanishMode ? "Estudio" : "Study");
   }
 
-  // when switching modes, reset per-card UI pieces
+  // reset per-card UI bits when switching modes
   el("quizFeedback")?.classList.add("hidden");
   el("nextBtn")?.classList.add("hidden");
   el("checkBtn")?.classList.remove("hidden");
@@ -995,12 +995,13 @@ function setQuizMode(on){
   // rating area only used in study mode
   if (window.quizMode){
     el("revealArea")?.classList.add("hidden");
-    el("answerCol")?.classList.add("hidden"); // keep hidden until check
+    el("answerCol")?.classList.add("hidden");
   }
 }
-// ===============================
-// BADGE POPUP (bulletproof)
-// ===============================
+
+/* ===============================
+   BADGE POPUP (single source of truth)
+   =============================== */
 function hideBadgePopup(){
   const p = el("badgePopup");
   if (!p) return;
@@ -1026,7 +1027,7 @@ function wireBadgePopup(){
   // Close button
   el("badgePopupCloseBtn")?.addEventListener("click", hideBadgePopup);
 
-  // Click outside the card closes
+  // Click outside closes
   el("badgePopup")?.addEventListener("click", (e) => {
     if (e.target && e.target.id === "badgePopup") hideBadgePopup();
   });
@@ -1036,598 +1037,10 @@ function wireBadgePopup(){
     if (e.key === "Escape") hideBadgePopup();
   });
 }
-/* ---------- Status helpers ---------- */
-function statusForCard(s){
-  if (!s || (s.attempts || 0) === 0) return { color: "var(--gray)", label: "Not attempted" };
 
-  const got = s.got || 0;
-  const close = s.close || 0;
-  const miss = s.miss || 0;
-
-  if (miss > close && miss > got) return { color: "var(--red)", label: "Needs practice" };
-  if (close > got) return { color: "var(--yellow)", label: "Close" };
-  if (got > 0) return { color: "var(--green)", label: "Got it" };
-
-  return { color: "var(--gray)", label: "Not attempted" };
-}
-
-function statusForCardBackend(s){
-  if (!s || (s.attempts || 0) === 0){
-    return { color:"var(--gray)", label:"Not attempted", pillHtml:`<span class="statusPill">Not yet</span>` };
-  }
-  const got = s.got || 0;
-  const close = s.close || 0;
-  const miss = s.miss || 0;
-
-  if (miss > close && miss > got){
-    return { color:"var(--red)", label:"Needs practice", pillHtml:`<span class="statusPill" style="background:var(--red)">✗ Practice</span>` };
-  }
-  if (close > got){
-    return { color:"var(--yellow)", label:"Close", pillHtml:`<span class="statusPill" style="background:var(--yellow)">~ Close</span>` };
-  }
-  if (got > 0){
-    return { color:"var(--green)", label:"Got it", pillHtml:`<span class="statusPill" style="background:var(--green)">✓ Got</span>` };
-  }
-  return { color:"var(--gray)", label:"Not attempted", pillHtml:`<span class="statusPill">Not yet</span>` };
-}
-
-/* ---------- Local progress storage ---------- */
-function ensureStudent(name){
-  if (!progress.students[name]){
-    progress.students[name] = { byCard:{}, log:[] };
-    saveProgress(progress);
-  }
-}
-
-function loadProgress(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const obj = raw ? JSON.parse(raw) : null;
-    if (!obj || typeof obj !== "object") return { students:{} };
-    if (!obj.students || typeof obj.students !== "object") obj.students = {};
-    return obj;
-  } catch {
-    return { students:{} };
-  }
-}
-
-function saveProgress(obj){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
-  } catch (e){
-    console.warn("saveProgress failed:", e);
-  }
-}
-
-/* ---------- Weekly total helper (local) ---------- */
-function startOfWeekLocalTs(nowTs){
-  const d = new Date(nowTs);
-  const day = d.getDay(); // 0=Sun,1=Mon...
-  const diffToMonday = (day === 0) ? 6 : (day - 1);
-  d.setHours(0,0,0,0);
-  d.setDate(d.getDate() - diffToMonday);
-  return d.getTime();
-}
-
-function sumWeeklyTotal(stu){
-  const weekStart = startOfWeekLocalTs(Date.now());
-  let total = 0;
-  if (!stu || !Array.isArray(stu.log)) return { weekStart, total: 0 };
-  for (const e of stu.log){
-    if ((e.ts || 0) >= weekStart) total += (e.dtMs || 0);
-  }
-  return { weekStart, total };
-}
-
-/* ---------- Recent student names (device only) ---------- */
-const RECENT_NAMES_KEY = "star_recent_students_v1";
-const MAX_RECENT_NAMES = 25;
-
-function loadRecentNames(){
-  try{
-    const raw = localStorage.getItem(RECENT_NAMES_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveRecentNames(arr){
-  try{
-    localStorage.setItem(RECENT_NAMES_KEY, JSON.stringify(arr));
-  } catch (e){
-    console.warn("saveRecentNames failed:", e);
-  }
-}
-
-function addRecentName(name){
-  const n = (name || "").trim();
-  if (!n) return;
-
-  let arr = loadRecentNames();
-  arr = arr.filter(x => String(x).toLowerCase() !== n.toLowerCase());
-  arr.unshift(n);
-  if (arr.length > MAX_RECENT_NAMES) arr = arr.slice(0, MAX_RECENT_NAMES);
-  saveRecentNames(arr);
-}
-
-function renderRecentNamesSuggestions(){
-  const dl = el("recentStudents");
-  if (!dl) return;
-
-  const arr = loadRecentNames();
-  dl.innerHTML = "";
-  for (const name of arr){
-    const opt = document.createElement("option");
-    opt.value = name;
-    dl.appendChild(opt);
-  }
-}
-
-/* ---------- TTS (click-to-toggle) ---------- */
-let ttsVoices = [];
-let __ttsActive = false;
-let __ttsLastKey = "";
-
-function loadTtsVoices(){
-  if (!("speechSynthesis" in window)) return;
-  ttsVoices = window.speechSynthesis.getVoices() || [];
-}
-
-function pickVoiceForLang(lang){
-  const want = (lang === "sp") ? ["es", "es-"] : ["en", "en-"];
-  return ttsVoices.find(v => want.some(p => (v.lang || "").toLowerCase().startsWith(p))) || null;
-}
-
-function ttsStop(){
-  if (!("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  __ttsActive = false;
-  __ttsLastKey = "";
-}
-
-function getTtsRate(){
-  // If you later add a slider, this will still work. For now default 1.0.
-  const saved = Number(localStorage.getItem("star_tts_rate_v1") || 1.0);
-  return Number.isNaN(saved) ? 1.0 : saved;
-}
-
-function ttsSpeak(text, key){
-  if (!text) return;
-  if (!("speechSynthesis" in window)) return;
-
-  const currentlySpeaking = window.speechSynthesis.speaking || window.speechSynthesis.pending;
-  if (currentlySpeaking && __ttsActive && __ttsLastKey === key){
-    ttsStop();
-    return;
-  }
-
-  ttsStop();
-  __ttsActive = true;
-  __ttsLastKey = key;
-
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = Math.min(1.3, Math.max(0.7, getTtsRate()));
-
-  const v = pickVoiceForLang(spanishMode ? "sp" : "en");
-  if (v) u.voice = v;
-
-  u.onend = () => { __ttsActive = false; __ttsLastKey = ""; };
-  u.onerror = () => { __ttsActive = false; __ttsLastKey = ""; };
-
-  window.speechSynthesis.speak(u);
-}
-
-/* ---------- Utilities ---------- */
-function fisherYates(arr){
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function formatMs(ms){
-  ms = Number(ms) || 0;
-  const totalSeconds = Math.round(ms / 1000);
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  if (m <= 0) return `${s}s`;
-  return `${m}m ${s}s`;
-}
-
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-// -------- QUIZ: normalization + grading --------
-function norm(s){
-  return String(s || "")
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // strip accents: á->a
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function tokensFrom(s){
-  const t = norm(s);
-  return t ? t.split(" ") : [];
-}
-
-function textHasAny(haystackNorm, phraseNorm){
-  // phraseNorm can be multi-word; check as substring for simplicity
-  if (!phraseNorm) return false;
-  return haystackNorm.includes(phraseNorm);
-}
-
-function groupSatisfied(answerNorm, group){
-  // group is array of synonyms/phrases
-  // true if any synonym phrase appears in normalized answer
-  for (const raw of (group || [])){
-    const p = norm(raw);
-    if (!p) continue;
-    if (textHasAny(answerNorm, p)) return true;
-  }
-  return false;
-}
-
-function gradeAnswerForCard(card, studentAnswerRaw, useSpanish){
-  const langKey = useSpanish ? "sp" : "en";
-  const rubric = card?.grade?.[langKey] || null;
-
-  // If no rubric, fall back to simple similarity vs answerText
-  if (!rubric){
-    const modelAns = useSpanish ? (card.answerTextSp || card.answerText || "") : (card.answerText || "");
-    const a = norm(studentAnswerRaw);
-    const b = norm(modelAns);
-    const ok = (a && b && (a === b || (a.length >= 8 && b.includes(a)) || (b.length >= 8 && a.includes(b))));
-    return {
-      level: ok ? "correct" : "incorrect",
-      score: ok ? 1 : 0,
-      hit: [],
-      missed: [],
-      message: useSpanish ? (ok ? "Correcto." : "No todavía.") : (ok ? "Correct." : "Not yet.")
-    };
-  }
-
-  const answerNorm = norm(studentAnswerRaw);
-  const must = Array.isArray(rubric.must) ? rubric.must : [];
-  const optional = Array.isArray(rubric.optional) ? rubric.optional : [];
-  const minMust = Number(rubric.minMustGroups || Math.max(1, Math.ceil(must.length * 0.6)));
-
-  const hit = [];
-  const missed = [];
-
-  for (let i = 0; i < must.length; i++){
-    const g = must[i];
-    const ok = groupSatisfied(answerNorm, g);
-    (ok ? hit : missed).push(g);
-  }
-
-  const hits = hit.length;
-  const needed = Math.min(minMust, must.length);
-
-  // Scoring + levels (moderately strict)
-  // correct: hits >= needed
-  // almost: hits >= max(1, needed-1)
-  const correct = hits >= needed;
-  const almost = !correct && hits >= Math.max(1, needed - 1);
-
-  const level = correct ? "correct" : (almost ? "almost" : "incorrect");
-
-  // Friendly feedback message (language-aware)
-  let message = "";
-  if (useSpanish){
-    if (level === "correct") message = "¡Correcto!";
-    else if (level === "almost") message = "Casi. Te falta una idea clave.";
-    else message = "No todavía. Intenta incluir las ideas clave.";
-  } else {
-    if (level === "correct") message = "Correct!";
-    else if (level === "almost") message = "Almost. You’re missing one key idea.";
-    else message = "Not yet. Try to include the key ideas.";
-  }
-
-  // Build “missing ideas” text by showing 1–2 example keywords from missed groups
-  const missingHints = missed.slice(0, 2).map(g => {
-    // pick 1–2 representative phrases from each missed group
-    const sample = (g || []).slice(0, 2).join(" / ");
-    return sample;
-  }).filter(Boolean);
-
-  if (missingHints.length){
-    message += useSpanish
-      ? `  Pista: incluye algo como ${missingHints.join(" + ")}.`
-      : `  Hint: include something like ${missingHints.join(" + ")}.`;
-  }
-
-  return {
-    level,                       // "correct" | "almost" | "incorrect"
-    score: must.length ? (hits / must.length) : (correct ? 1 : 0),
-    hits,
-    needed,
-    hit,
-    missed,
-    message
-  };
-}
-/* ---------- Badges (minutes studied) ---------- */
-const BADGES = [
-  { minutes: 5,   cards: 3,   name: "Warm-Up",         emoji: "🔥" },
-  { minutes: 15,  cards: 8,   name: "Getting Started", emoji: "⭐" },
-  { minutes: 30,  cards: 15,  name: "Half-Hour Hero",  emoji: "🦸" },
-  { minutes: 60,  cards: 25,  name: "One-Hour Champ",  emoji: "🏆" },
-  { minutes: 120, cards: 40,  name: "Study Streaker",  emoji: "⚡" },
-  { minutes: 240, cards: 60,  name: "Focused Fox",     emoji: "🦊" },
-  { minutes: 500, cards: 90,  name: "STAR Master",     emoji: "👑" },
-];
-
-const BADGE_EARNED_KEY = "star_badges_earned_v1";
-
-function badgeKey(student, badge){
-  // Unique per student + badge requirement
-  return `${student}::${badge.minutes}m::${badge.cards}c`;
-}
-
-function loadEarnedBadges(){
-  try{
-    const raw = localStorage.getItem(BADGE_EARNED_KEY);
-    const obj = raw ? JSON.parse(raw) : {};
-    return (obj && typeof obj === "object") ? obj : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveEarnedBadges(obj){
-  try{
-    localStorage.setItem(BADGE_EARNED_KEY, JSON.stringify(obj));
-  } catch {}
-}
-
-function showBadgePopup(badge, totals){
-  const pop = el("badgePopup");
-  if (!pop) return;
-
-  el("badgePopupEmoji") && (el("badgePopupEmoji").textContent = badge.emoji);
-  el("badgePopupTitle") && (el("badgePopupTitle").textContent = `Badge earned: ${badge.name}!`);
-  el("badgePopupBody") && (el("badgePopupBody").textContent =
-    `You reached ${totals.minutes} minutes and ${totals.cards} cards attempted. Keep going!`
-  );
-
-  // ✅ Bulletproof show (doesn't rely on .hidden CSS)
-  pop.style.display = "flex";
-  pop.classList.remove("hidden");
-}
-
-function hideBadgePopup(){
-  const pop = el("badgePopup");
-  if (!pop) return;
-
-  // ✅ Bulletproof hide
-  pop.style.display = "none";
-  pop.classList.add("hidden");
-}
-function totalMsLocalEverForStudent(stu){
-  if (!stu || !stu.byCard) return 0;
-  let total = 0;
-  for (const id in stu.byCard){
-    total += Number(stu.byCard[id]?.timeMs || 0);
-  }
-  return total;
-}
-function checkForNewBadgesAndPopup(){
-  if (!currentStudent) return;
-
-  const stu = progress.students[currentStudent];
-  if (!stu) return;
-
-  const timeEverMs = totalMsLocalEverForStudent(stu);
-  const minutes = Math.floor(timeEverMs / 60000);
-  const cardsAttempted = distinctCardsLocalAttempted(stu);
-
-  const earned = loadEarnedBadges();
-
-  // Find the FIRST badge that is newly earned (in order)
-  for (const b of BADGES){
-    const meets = (minutes >= b.minutes && cardsAttempted >= b.cards);
-    if (!meets) continue;
-
-    const k = badgeKey(currentStudent, b);
-    if (earned[k]) continue; // already celebrated
-
-    // Mark as earned and show popup
-    earned[k] = { ts: Date.now(), minutes, cardsAttempted };
-    saveEarnedBadges(earned);
-
-    showBadgePopup(b, { minutes, cards: cardsAttempted });
-    break;
-  }
-}
-function formatMinutesFromMs(ms){
-  const mins = Math.floor((Number(ms) || 0) / 60000);
-  return `${mins} min`;
-}
-function distinctCardsLocalAttempted(stu){
-  if (!stu || !stu.byCard) return 0;
-  let count = 0;
-  for (const id in stu.byCard){
-    if ((stu.byCard[id]?.attempts || 0) > 0) count++;
-  }
-  return count;
-}
-async function openBadges(){
-  try{
-    // Always switch to badges view immediately (so it never “looks like nothing happened”)
-    showView("badges");
-
-    // If we don't have a name, show a friendly message on the badges page
-    let name = (currentStudent || "").trim();
-    if (!name) name = (el("studentName")?.value || "").trim();
-
-    if (!name){
-      // Populate badges page with a prompt instead of leaving it blank
-      currentStudent = "";
-      el("badgesStudentPill") && (el("badgesStudentPill").textContent = "Student: (enter your name first)");
-      el("badgesTotalPill") && (el("badgesTotalPill").textContent = "");
-      el("badgesSourcePill") && (el("badgesSourcePill").textContent = "");
-      el("badgesNextHint") && (el("badgesNextHint").textContent = "Go back and type your name to see your badges.");
-      el("badgesSummary") && (el("badgesSummary").innerHTML = `<div class="summaryChip">No student selected</div>`);
-      el("badgesGrid") && (el("badgesGrid").innerHTML = "");
-      console.log("[badges] opened with no name -> showing prompt");
-      return;
-    }
-
-    // Normal flow
-    currentStudent = name;
-    addRecentName(currentStudent);
-    renderRecentNamesSuggestions();
-    ensureStudent(currentStudent);
-
-    // Local totals (instant)
-    const localStu = progress.students[currentStudent];
-    const localTimeEverMs = totalMsLocalEverForStudent(localStu);
-    const localCardsAttempted = distinctCardsLocalAttempted(localStu);
-
-    let sourceLabel = "This device";
-    let timeEverMs = localTimeEverMs;
-    let cardsAttempted = localCardsAttempted;
-
-    // Backend (best-of backend+local)
-    try{
-      const backendStu = await fetchBackendStudent(currentStudent);
-      if (backendStu && backendStu.ok){
-        window.__studentBackend = backendStu;
-
-        const backendTime = (typeof backendStu.timeEver === "number") ? backendStu.timeEver : 0;
-
-        let backendCards = 0;
-        if (typeof backendStu.cardsAttempted === "number"){
-          backendCards = backendStu.cardsAttempted;
-        } else if (backendStu.byCard && typeof backendStu.byCard === "object"){
-          backendCards = Object.values(backendStu.byCard).filter(s => (s.attempts || 0) > 0).length;
-        }
-
-        timeEverMs = Math.max(localTimeEverMs, backendTime);
-        cardsAttempted = Math.max(localCardsAttempted, backendCards);
-
-        if (backendTime || backendCards) sourceLabel = "All devices (best of backend + local)";
-      }
-    } catch (e){
-      console.warn("[badges] backend fetch failed; using local", e);
-    }
-
-    console.log("[badges] totals", { currentStudent, timeEverMs, cardsAttempted, sourceLabel });
-
-    renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel });
-  } catch (err){
-    console.error("[badges] openBadges crashed", err);
-    alert("Badges page error. Open Console for details.");
-  }
-}
-function renderBadgesPage({ timeEverMs, cardsAttempted, sourceLabel }){
-  // --- Debug (remove later if you want) ---
-  console.log("[badges] render", { timeEverMs, cardsAttempted, sourceLabel, BADGES_type: typeof BADGES, BADGES_len: (typeof BADGES !== "undefined" && BADGES?.length) });
-
-  const totalMin = Math.floor((Number(timeEverMs) || 0) / 60000);
-  const cardsN = Number(cardsAttempted) || 0;
-
-  el("badgesStudentPill") && (el("badgesStudentPill").textContent = `Student: ${currentStudent}`);
-  el("badgesTotalPill") && (el("badgesTotalPill").textContent = `Total: ${totalMin} min • ${cardsN} cards`);
-  el("badgesSourcePill") && (el("badgesSourcePill").textContent = `Source: ${sourceLabel || ""}`);
-
-  // ✅ Guard: BADGES must exist
-  const badgeList =
-    (typeof BADGES !== "undefined" && Array.isArray(BADGES)) ? BADGES : [];
-
-  const hint = el("badgesNextHint");
-  const sum = el("badgesSummary");
-  const grid = el("badgesGrid");
-  if (!grid) return;
-
-  // ✅ If BADGES is missing, show a helpful message instead of blank
-  if (!badgeList.length){
-    if (hint) hint.textContent = "No badge definitions found (BADGES array is missing).";
-    if (sum) sum.innerHTML = `<div class="summaryChip">Fix needed: BADGES is not loaded.</div>`;
-    grid.innerHTML = "";
-    return;
-  }
-
-  const earned = badgeList.filter(b => totalMin >= b.minutes && cardsN >= b.cards);
-  const next = badgeList.find(b => !(totalMin >= b.minutes && cardsN >= b.cards)) || null;
-
-  if (hint){
-    if (!next){
-      hint.textContent = "You earned every badge! 🥳";
-    } else {
-      const minLeft = Math.max(0, next.minutes - totalMin);
-      const cardsLeft = Math.max(0, next.cards - cardsN);
-      if (minLeft > 0 && cardsLeft > 0){
-        hint.textContent = `Next badge: ${next.emoji} ${next.name} — ${minLeft} more min AND ${cardsLeft} more cards to go!`;
-      } else if (minLeft > 0){
-        hint.textContent = `Next badge: ${next.emoji} ${next.name} — ${minLeft} more minutes to go!`;
-      } else {
-        hint.textContent = `Next badge: ${next.emoji} ${next.name} — ${cardsLeft} more cards to go!`;
-      }
-    }
-  }
-
-  if (sum){
-    sum.innerHTML = `
-      <div class="summaryChip">Badges earned: <b>${earned.length}</b> / ${badgeList.length}</div>
-      <div class="summaryChip">Minutes studied: <b>${totalMin}</b></div>
-      <div class="summaryChip">Cards attempted: <b>${cardsN}</b></div>
-    `;
-  }
-
-  grid.innerHTML = "";
-
-  // ✅ Guard: escapeHtml fallback (prevents crash)
-  const safeEscape = (typeof escapeHtml === "function")
-    ? escapeHtml
-    : (s => String(s));
-
-  for (const b of badgeList){
-    const got = (totalMin >= b.minutes && cardsN >= b.cards);
-
-    const tile = document.createElement("div");
-    tile.className = "dashCard";
-    tile.style.background = got ? "var(--green)" : "var(--gray)";
-    tile.style.opacity = got ? "1" : "0.6";
-
-    tile.innerHTML = `
-      <b style="font-size:22px;">${b.emoji}</b>
-      <div style="font-weight:700;">${safeEscape(b.name)}</div>
-      <small>Need: ${b.minutes} min • ${b.cards} cards</small>
-      <small>${got ? "Earned!" : "Not yet"}</small>
-    `;
-
-    grid.appendChild(tile);
-  }
-}
-
-function wireBadgePopup(){
-  // Close button
-  el("badgePopupCloseBtn")?.addEventListener("click", hideBadgePopup);
-
-  // Click outside the modal closes
-  el("badgePopup")?.addEventListener("click", (e) => {
-    if (e.target && e.target.id === "badgePopup") hideBadgePopup();
-  });
-
-  // ESC key closes
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") hideBadgePopup();
-  });
-}
-
-// -------- QUIZ: per-card stats separate from study ratings --------
+/* ===============================
+   QUIZ per-card storage (single copy)
+   =============================== */
 function ensureQuizCard(stu, cardId){
   if (!stu.quizByCard) stu.quizByCard = {};
   if (!stu.quizByCard[cardId]){
@@ -1651,64 +1064,18 @@ function recordQuizResult(studentName, cardId, level){
   s.attempts += 1;
   s.lastLevel = level;
   s.lastTs = Date.now();
+
   if (level === "correct") s.correct += 1;
   else if (level === "almost") s.almost += 1;
   else s.incorrect += 1;
 
   saveProgress(progress);
-// ===============================
-// QUIZ MODE TOGGLE + FEEDBACK UI
-// ===============================
-let quizMode = false; // top-level flag
-
-function openQuizMode(){
-  quizMode = !quizMode;
-
-  const btn = el("quizInStudyBtn");
-  if (btn){
-    // When quizMode ON, button shows "Study"/"Estudio" so kids know how to toggle back
-    btn.textContent = quizMode
-      ? (spanishMode ? "Estudio" : "Study")
-      : "Quiz";
-  }
-
-  // Hide old quiz feedback when toggling
-  el("quizFeedback")?.classList.add("hidden");
-
-  // Optional: if answer/reveal is currently open, keep it as-is
-  // (no navigation changes here)
 }
 
-function setQuizFeedback(level, message){
-  const box = el("quizFeedback");
-  const verdict = el("quizVerdict");
-  const msg = el("quizMessage");
-  if (!box || !verdict || !msg) return;
-
-  const sp = !!spanishMode;
-
-  if (level === "correct"){
-    verdict.textContent = sp ? "¡Correcto!" : "Correct!";
-  } else if (level === "almost"){
-    verdict.textContent = sp ? "Casi" : "Almost";
-  } else {
-    verdict.textContent = sp ? "Incorrecto" : "Incorrect";
-  }
-
-  msg.textContent = message || "";
-  box.classList.remove("hidden");
-}
-   
 /* =====================================================
    ✅ WIRE EVERYTHING (matches your updated index.html)
    ===================================================== */
 function wireEverything(){
-
-  // ---------- Badge popup ----------
-  el("badgePopupCloseBtn")?.addEventListener("click", hideBadgePopup);
-  el("badgePopup")?.addEventListener("click", (e) => {
-    if (e.target && e.target.id === "badgePopup") hideBadgePopup();
-  });
 
   // ---------- Persistent top bar ----------
   el("modeStudent")?.addEventListener("click", () => showView("start"));
@@ -1718,7 +1085,7 @@ function wireEverything(){
   // ---------- Start view ----------
   el("startBtn")?.addEventListener("click", start);
 
-  // Dashboard button (ONE behavior everywhere: open "My ratings" by default)
+  // Dashboard buttons (open ratings by default)
   el("studentDashBtn")?.addEventListener("click", openDashboardDefault);
 
   el("badgesBtn")?.addEventListener("click", openBadges);
@@ -1727,10 +1094,10 @@ function wireEverything(){
   el("dashInStudyBtn")?.addEventListener("click", openDashboardDefault);
   el("badgesInStudyBtn")?.addEventListener("click", openBadges);
 
-  // Home button (replaces Change units)
+  // Home button
   el("homeBtn")?.addEventListener("click", goToStart);
 
-  // Quiz mode toggle switch (replaces Quiz button)
+  // Quiz mode toggle switch
   el("quizModeToggle")?.addEventListener("change", (e) => {
     setQuizMode(!!e.target.checked);
   });
@@ -1740,19 +1107,16 @@ function wireEverything(){
   el("skipBtn")?.addEventListener("click", () => advance("skip"));
 
   el("nextBtn")?.addEventListener("click", () => {
-    // After a quiz check, Next advances to the next card
     el("quizFeedback")?.classList.add("hidden");
 
-    // restore buttons for the next card
     el("nextBtn")?.classList.add("hidden");
     el("checkBtn")?.classList.remove("hidden");
     el("skipBtn")?.classList.remove("hidden");
 
-    // advance without self-rating (treated like skip)
     advance("skip");
   });
 
-  // Self-rating buttons (Study mode only; in Quiz mode the UI is hidden by reveal())
+  // Self-rating buttons (Study mode only; hidden in Quiz mode)
   el("rateGot")?.addEventListener("click", () => advance("got"));
   el("rateClose")?.addEventListener("click", () => advance("close"));
   el("rateMiss")?.addEventListener("click", () => advance("miss"));
@@ -1786,6 +1150,7 @@ function wireEverything(){
     }
   });
 }
+
 /* ---------- Init ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
   try{
@@ -1794,8 +1159,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadTtsVoices();
       window.speechSynthesis.onvoiceschanged = loadTtsVoices;
     }
-wireBadgePopup();
-     hideBadgePopup();
+
+    wireBadgePopup();
+    hideBadgePopup();
+
     renderRecentNamesSuggestions();
     setSpanishMode(spanishMode);
 
@@ -1804,6 +1171,9 @@ wireBadgePopup();
 
     wireEverything();
 
+    // Ensure UI matches current quiz mode
+    setQuizMode(window.quizMode);
+
     showView("start");
     console.log("[init] ready");
   } catch (e){
@@ -1811,4 +1181,3 @@ wireBadgePopup();
     alert("App failed to initialize. Open Console for details.");
   }
 });
-}
