@@ -32,41 +32,202 @@ let cardStartTs = null;
 function el(id){
   return document.getElementById(id);
 }
+// =====================================================
+// QUIZ MODE + QUIZ DASHBOARD (DROP-IN BLOCK)
+// =====================================================
 
-/* ---------- Views ---------- */
-function showView(which){
-  const views = ["startView", "studyView", "studentDashView", "badgesView", "teacherView"];
+// Global flag
+let quizMode = false;
 
-  // Hide all
-  for (const id of views){
-    const v = el(id);
-    if (v) v.classList.add("hidden");
+// --- Quiz toggle button ---
+function openQuizMode(){
+  quizMode = !quizMode;
+
+  const btn = el("quizInStudyBtn");
+  if (btn){
+    btn.textContent = quizMode
+      ? (spanishMode ? "Estudio" : "Study")
+      : "Quiz";
   }
 
-  // Show exactly one
+  // Hide old feedback whenever toggling
+  el("quizFeedback")?.classList.add("hidden");
+}
+
+// --- Feedback box ---
+function setQuizFeedback(level, message){
+  const box = el("quizFeedback");
+  const verdict = el("quizVerdict");
+  const msg = el("quizMessage");
+  if (!box || !verdict || !msg) return;
+
+  if (level === "correct"){
+    verdict.textContent = spanishMode ? "¡Correcto!" : "Correct!";
+  } else if (level === "almost"){
+    verdict.textContent = spanishMode ? "Casi" : "Almost";
+  } else {
+    verdict.textContent = spanishMode ? "Incorrecto" : "Incorrect";
+  }
+
+  msg.textContent = message || "";
+  box.classList.remove("hidden");
+}
+
+// --- QUIZ stats storage (separate from self-rating study stats) ---
+function ensureQuizCard(stu, cardId){
+  if (!stu.quizByCard) stu.quizByCard = {};
+  if (!stu.quizByCard[cardId]){
+    stu.quizByCard[cardId] = {
+      correct: 0,
+      almost: 0,
+      incorrect: 0,
+      attempts: 0,
+      lastLevel: null,
+      lastTs: 0
+    };
+  }
+  return stu.quizByCard[cardId];
+}
+
+function recordQuizResult(studentName, cardId, level){
+  ensureStudent(studentName);
+  const stu = progress.students[studentName];
+  const s = ensureQuizCard(stu, cardId);
+
+  s.attempts += 1;
+  s.lastLevel = level;
+  s.lastTs = Date.now();
+
+  if (level === "correct") s.correct += 1;
+  else if (level === "almost") s.almost += 1;
+  else s.incorrect += 1;
+
+  saveProgress(progress);
+}
+
+// --- Quiz dashboard view ---
+function openQuizDashboard(){
+  let name = (currentStudent || "").trim();
+  if (!name) name = (el("studentName")?.value || "").trim();
+
+  if (!name){
+    alert(spanishMode ? "Escribe tu nombre primero." : "Enter your name first.");
+    return;
+  }
+
+  currentStudent = name;
+  ensureStudent(currentStudent);
+
+  renderQuizDashboard();
+  showView("quizDash");
+}
+
+function quizStatusColor(s){
+  if (!s || !s.attempts) return "var(--gray)";
+  if (s.lastLevel === "correct") return "var(--green)";
+  if (s.lastLevel === "almost") return "var(--yellow)";
+  return "var(--red)";
+}
+
+function renderQuizDashboard(){
+  const stu = progress.students[currentStudent];
+  if (!stu){
+    console.warn("[quiz] no student data");
+    return;
+  }
+
+  el("quizDashStudentPill") && (el("quizDashStudentPill").textContent = `Student: ${currentStudent}`);
+  el("quizDashLangPill") && (el("quizDashLangPill").textContent = spanishMode ? "Idioma: Español" : "Language: English");
+
+  const by = stu.quizByCard || {};
+
+  let correct=0, almost=0, incorrect=0, attempts=0, attemptedCards=0;
+
+  for (const c of cards){
+    const s = by[c.id];
+    if (!s || !s.attempts) continue;
+    attemptedCards++;
+    correct += s.correct || 0;
+    almost += s.almost || 0;
+    incorrect += s.incorrect || 0;
+    attempts += s.attempts || 0;
+  }
+
+  const hint = el("quizDashHint");
+  if (hint){
+    hint.textContent = spanishMode
+      ? "Colores = tu ÚLTIMO resultado en modo Quiz."
+      : "Colors = your MOST RECENT Quiz result.";
+  }
+
+  const sum = el("quizDashSummary");
+  if (sum){
+    sum.innerHTML = `
+      <div class="summaryChip">✅ ${correct}</div>
+      <div class="summaryChip">🟨 ${almost}</div>
+      <div class="summaryChip">❌ ${incorrect}</div>
+      <div class="summaryChip">Attempts: <b>${attempts}</b></div>
+      <div class="summaryChip">Cards quizzed: <b>${attemptedCards}</b> / ${cards.length}</div>
+    `;
+  }
+
+  const grid = el("quizDashGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  const sorted = [...cards].sort((a,b)=>{
+    if (a.unit !== b.unit) return a.unit - b.unit;
+    return a.id.localeCompare(b.id, undefined, { numeric:true });
+  });
+
+  for (const c of sorted){
+    const s = by[c.id] || { attempts:0, correct:0, almost:0, incorrect:0, lastLevel:null };
+
+    const tile = document.createElement("div");
+    tile.className = "dashCard";
+    tile.style.background = quizStatusColor(s);
+    tile.style.opacity = s.attempts ? "1" : "0.6";
+
+    tile.innerHTML = `
+      <b>${escapeHtml(c.id)}</b>
+      <small>Unit ${c.unit}</small>
+      <small>${s.attempts ? `Quiz attempts: ${s.attempts}` : (spanishMode ? "No quiz todavía" : "Not quizzed yet")}</small>
+    `;
+
+    tile.title =
+      `Quiz stats:\n` +
+      `✅ ${s.correct || 0}  🟨 ${s.almost || 0}  ❌ ${s.incorrect || 0}\n` +
+      `Attempts: ${s.attempts || 0}`;
+
+    // Click tile to jump to that single card in study view
+    tile.addEventListener("click", () => {
+      selectedUnits = new Set([Number(c.unit)]);
+      queue = [c];
+      idx = 0;
+      showView("study");
+      renderCard();
+    });
+
+    grid.appendChild(tile);
+  }
+}
+/* ---------- Views ---------- */
+function showView(which){
   const map = {
     start: "startView",
     study: "studyView",
     studentDash: "studentDashView",
     badges: "badgesView",
-     quizDash: "quizDashView",
-    teacher: "teacherView",
+    quizDash: "quizDashView",
+    teacher: "teacherView"
   };
 
-  const targetId = map[which];
-  const target = targetId ? el(targetId) : null;
+  const targetId = map[which] || which;
 
-  if (target){
-    target.classList.remove("hidden");
-  } else {
-    console.warn("[showView] unknown view:", which, "showing startView instead");
-    el("startView")?.classList.remove("hidden");
+  const all = ["startView","studyView","studentDashView","badgesView","quizDashView","teacherView"];
+  for (const id of all){
+    el(id)?.classList.toggle("hidden", id !== targetId);
   }
-
-  console.log("[showView]", which, "=>", targetId,
-    "badgesHidden?", el("badgesView")?.classList.contains("hidden"),
-    "startHidden?", el("startView")?.classList.contains("hidden")
-  );
 }
 /* ---------- Language toggle ---------- */
 function setSpanishMode(on){
@@ -1439,8 +1600,8 @@ function wireEverything(){
   // ---------- Study view ----------
   el("dashInStudyBtn")?.addEventListener("click", openStudentDashboard);
   el("badgesInStudyBtn")?.addEventListener("click", openBadges);
-  el("quizInStudyBtn")?.addEventListener("click", openQuizMode);
-  el("quizDashBtn")?.addEventListener("click", openQuizDashboard);
+ el("quizInStudyBtn")?.addEventListener("click", () => openQuizMode());
+el("quizDashBtn")?.addEventListener("click", () => openQuizDashboard());
   el("changeBtn")?.addEventListener("click", goToStart);
 
   el("checkBtn")?.addEventListener("click", () => { ttsStop?.(); reveal(); });
