@@ -9,7 +9,37 @@
     "text": "What is volume? How is volume measured?",
     "answerText": "Volume is the amount of space inside a 3D shape. Volume is measured in cubic units.",
     "textSp": "¿Qué es el volumen? ¿Cómo se mide el volumen?",
-    "answerTextSp": "El volumen es la cantidad de espacio dentro de una forma tridimensional. Se mide en unidades cúbicas."
+    "answerTextSp": "El volumen es la cantidad de espacio dentro de una forma tridimensional. Se mide en unidades cúbicas.",
+    "grade": {
+      "en": {
+        "must": [
+          ["volume"],
+          ["space", "room", "how much space", "amount of space"],
+          ["inside", "in", "within", "interior"],
+          ["3d", "three dimensional", "three-dimensional", "3 dimensional", "solid", "shape"]
+        ],
+        "optional": [
+          ["measured", "measure"],
+          ["cubic", "cube"],
+          ["units", "unit"]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["volumen"],
+          ["espacio", "cantidad de espacio", "cuanto espacio", "cuanto espacio hay"],
+          ["dentro", "adentro", "en", "por dentro"],
+          ["tridimensional", "3d", "tres dimensiones", "figura", "forma", "solido"]
+        ],
+        "optional": [
+          ["se mide", "medido", "medir"],
+          ["unidades cubicas", "cubicas", "cubos"],
+          ["unidades", "unidad"]
+        ],
+        "minMustGroups": 3
+      }
+    }
   },
   {
     "id": "1b",
@@ -21,7 +51,35 @@
     "text": "How can you figure out the volume of this three-dimensional shape?",
     "answerText": "Find the area of the base, times the height.",
     "textSp": "¿Cómo se puede calcular el volumen de esta figura tridimensional?",
-    "answerTextSp": "Encuentra el área de la base y multiplícala por la altura."
+    "answerTextSp": "Encuentra el área de la base y multiplícala por la altura.",
+    "grade": {
+      "en": {
+        "must": [
+          ["area", "base area", "area of the base"],
+          ["base", "bottom"],
+          ["height", "tall", "how tall"],
+          ["times", "multiply", "multiplied", "x"]
+        ],
+        "optional": [
+          ["find", "get", "calculate", "do"],
+          ["then"]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["area", "el area", "area de la base"],
+          ["base", "abajo", "parte de abajo"],
+          ["altura", "alto", "que tan alto"],
+          ["multiplica", "multiplicar", "por", "x"]
+        ],
+        "optional": [
+          ["encuentra", "calcula", "saca"],
+          ["luego", "despues"]
+        ],
+        "minMustGroups": 3
+      }
+    }
   },
   {
     "id": "1c",
@@ -33,7 +91,37 @@
     "text": "You can’t see the cubes that make up the volume of the rectangular prism. How can you still find the volume?",
     "answerText": "Use the formula: volume equals length times width times height.",
     "textSp": "No puedes ver los cubos que componen el volumen del prisma rectangular. ¿Cómo puedes calcular el volumen?",
-    "answerTextSp": "Usa la fórmula: volumen igual a longitud por anchura por altura."
+    "answerTextSp": "Usa la fórmula: volumen igual a longitud por anchura por altura.",
+    "grade": {
+      "en": {
+        "must": [
+          ["length", "l"],
+          ["width", "w"],
+          ["height", "h"],
+          ["times", "multiply", "x"],
+          ["formula", "equation", "use l w h", "lwh"]
+        ],
+        "optional": [
+          ["volume", "v"],
+          ["rectangular prism", "box"]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["longitud", "largo"],
+          ["anchura", "ancho"],
+          ["altura", "alto"],
+          ["por", "multiplica", "multiplicar", "x"],
+          ["formula", "ecuacion", "usa"]
+        ],
+        "optional": [
+          ["volumen"],
+          ["prisma rectangular", "caja"]
+        ],
+        "minMustGroups": 3
+      }
+    }
   },
   {
     "id": "1d",
@@ -45,7 +133,35 @@
     "text": "Complete the following measurement conversions.",
     "answerText": "1 foot equals 12 inches. 1 yard equals 3 feet. 1 pound equals 16 ounces. 1 liter equals 1,000 milliliters.",
     "textSp": "Completa las siguientes conversiones.",
-    "answerTextSp": "Un pie es igual a doce pulgadas. Una yarda es igual a tres pies. Una libra es igual a dieciséis onzas. Un litro es igual a mil mililitros."
+    "answerTextSp": "Un pie es igual a doce pulgadas. Una yarda es igual a tres pies. Una libra es igual a dieciséis onzas. Un litro es igual a mil mililitros.",
+    "grade": {
+      "en": {
+        "must": [
+          ["foot", "ft"],
+          ["12", "twelve"],
+          ["inch", "inches", "in"],
+          ["yard", "yd", "3", "three", "feet", "foot"],
+          ["pound", "lb", "16", "sixteen", "ounce", "ounces", "oz"],
+          ["liter", "l", "1000", "one thousand", "milliliter", "milliliters", "ml"]
+        ],
+        "optional": [
+          ["equals", "is", "=", "equal"]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["pie"], ["12", "doce"], ["pulgada", "pulgadas"],
+          ["yarda"], ["3", "tres"], ["pies"],
+          ["libra"], ["16", "dieciseis"], ["onza", "onzas"],
+          ["litro"], ["1000", "mil"], ["mililitro", "mililitros"]
+        ],
+        "optional": [
+          ["es igual", "igual", "="]
+        ],
+        "minMustGroups": 3
+      }
+    }
   },
   {
     "id": "2a",
@@ -57,7 +173,35 @@
     "text": "What is a fraction? What is the top number called? What is the bottom number called?",
     "answerText": "A fraction is a number that represents part of a whole. The top number is the numerator. The bottom number is the denominator.",
     "textSp": "¿Qué es una fracción? ¿Cómo se llama la parte de arriba? ¿Cómo se llama la parte de abajo?",
-    "answerTextSp": "Una fracción es un número que representa una parte de un todo. La parte de arriba se llama numerador. La parte de abajo se llama denominador."
+    "answerTextSp": "Una fracción es un número que representa una parte de un todo. La parte de arriba se llama numerador. La parte de abajo se llama denominador.",
+    "grade": {
+      "en": {
+        "must": [
+          ["fraction", "fractions"],
+          ["part", "piece", "portion", "some of"],
+          ["whole", "one whole", "entire"],
+          ["numerator", "top number", "top"],
+          ["denominator", "bottom number", "bottom"]
+        ],
+        "optional": [
+          ["equal parts", "equal"]
+        ],
+        "minMustGroups": 4
+      },
+      "sp": {
+        "must": [
+          ["fraccion", "fracciones"],
+          ["parte", "pedazo", "porcion"],
+          ["todo", "entero", "completo"],
+          ["numerador", "arriba"],
+          ["denominador", "abajo"]
+        ],
+        "optional": [
+          ["partes iguales", "igual"]
+        ],
+        "minMustGroups": 4
+      }
+    }
   },
   {
     "id": "2b",
@@ -69,7 +213,35 @@
     "text": "What are the two main ways to interpret the fraction three fifths?",
     "answerText": "It means 3 out of 5 equal parts. It can also mean 3 divided by 5.",
     "textSp": "¿Cuáles son las dos maneras principales de interpretar la fracción tres quintos?",
-    "answerTextSp": "Primero, significa tres partes iguales de cinco partes en total. Segundo, significa tres dividido entre cinco."
+    "answerTextSp": "Primero, significa tres partes iguales de cinco partes en total. Segundo, significa tres dividido entre cinco.",
+    "grade": {
+      "en": {
+        "must": [
+          ["3", "three"],
+          ["out of", "of", "in", "from"],
+          ["5", "five"],
+          ["equal parts", "parts", "pieces"],
+          ["divided by", "divide", "division", "3/5", "3 ÷ 5", "3 over 5"]
+        ],
+        "optional": [
+          ["means", "represents", "interpret"]
+        ],
+        "minMustGroups": 4
+      },
+      "sp": {
+        "must": [
+          ["tres", "3"],
+          ["de", "de un total de", "de"],
+          ["cinco", "5"],
+          ["partes", "partes iguales"],
+          ["dividido entre", "division", "divide", "3/5", "3 ÷ 5"]
+        ],
+        "optional": [
+          ["significa", "representa"]
+        ],
+        "minMustGroups": 4
+      }
+    }
   },
   {
     "id": "2c",
@@ -81,7 +253,37 @@
     "text": "Explain how you multiply fractions like these.",
     "answerText": "Multiply straight across: multiply the numerators and multiply the denominators. If you multiply by a whole number, write it as a fraction over 1 first.",
     "textSp": "Explica cómo puedes multiplicar fracciones como las siguientes.",
-    "answerTextSp": "Multiplica de manera directa: multiplica los numeradores entre sí y los denominadores entre sí. Si multiplicas por un número entero, renómbralo como una fracción sobre uno y luego multiplica de manera directa."
+    "answerTextSp": "Multiplica de manera directa: multiplica los numeradores entre sí y los denominadores entre sí. Si multiplicas por un número entero, renómbralo como una fracción sobre uno y luego multiplica de manera directa.",
+    "grade": {
+      "en": {
+        "must": [
+          ["multiply", "times", "multiplying"],
+          ["numerator", "top"],
+          ["denominator", "bottom"],
+          ["across", "straight across"],
+          ["whole number", "integer", "over 1", "/1", "fraction over 1"]
+        ],
+        "optional": [
+          ["then", "first"],
+          ["simplify", "reduce"]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["multiplica", "multiplicar", "por"],
+          ["numerador", "arriba"],
+          ["denominador", "abajo"],
+          ["directo", "de manera directa", "derecho"],
+          ["entero", "numero entero", "sobre 1", "/1", "fraccion sobre 1"]
+        ],
+        "optional": [
+          ["luego", "despues"],
+          ["simplifica", "reduce"]
+        ],
+        "minMustGroups": 3
+      }
+    }
   },
   {
     "id": "2d",
@@ -93,7 +295,39 @@
     "text": "How do you convert a mixed number into an improper fraction?",
     "answerText": "Multiply the whole number by the denominator, then add the numerator. Keep the same denominator.",
     "textSp": "¿Cómo convertimos un número mixto en una fracción impropia?",
-    "answerTextSp": "Primero, multiplica el número entero por el denominador. Después, suma el numerador. Por último, mantén el mismo denominador."
+    "answerTextSp": "Primero, multiplica el número entero por el denominador. Después, suma el numerador. Por último, mantén el mismo denominador.",
+    "grade": {
+      "en": {
+        "must": [
+          ["multiply", "times"],
+          ["whole number", "whole", "integer"],
+          ["denominator", "bottom"],
+          ["add", "plus"],
+          ["numerator", "top"],
+          ["keep", "same denominator", "same bottom"]
+        ],
+        "optional": [
+          ["then", "next", "after"],
+          ["improper fraction"]
+        ],
+        "minMustGroups": 4
+      },
+      "sp": {
+        "must": [
+          ["multiplica", "multiplicar", "por"],
+          ["entero", "numero entero"],
+          ["denominador"],
+          ["suma", "sumar", "mas"],
+          ["numerador"],
+          ["manten", "mantener", "el mismo denominador", "mismo denominador"]
+        ],
+        "optional": [
+          ["despues", "luego"],
+          ["fraccion impropia"]
+        ],
+        "minMustGroups": 4
+      }
+    }
   },
   {
     "id": "2e",
@@ -105,7 +339,39 @@
     "text": "Explain how you know that 7 × 4/9 is smaller than 7. Explain how you know that 11 × 5/2 is greater than 11.",
     "answerText": "If you multiply by a fraction smaller than 1, you will get a smaller number. If you multiply by a fraction bigger than 1, you will get a bigger number.",
     "textSp": "Explica cómo sabes que siete por cuatro novenos es un número más pequeño que siete. Explica cómo sabes que once por cinco medios es un número más grande que once.",
-    "answerTextSp": "Si multiplicas por una fracción menor que 1, obtendrás un número más pequeño. Si multiplicas por una fracción mayor que 1, obtendrás un número más grande."
+    "answerTextSp": "Si multiplicas por una fracción menor que 1, obtendrás un número más pequeño. Si multiplicas por una fracción mayor que 1, obtendrás un número más grande.",
+    "grade": {
+      "en": {
+        "must": [
+          ["multiply", "times"],
+          ["fraction"],
+          ["less than 1", "smaller than 1", "<1", "under 1"],
+          ["greater than 1", "bigger than 1", ">1", "over 1", "more than 1"],
+          ["smaller", "less", "goes down"],
+          ["bigger", "greater", "goes up"]
+        ],
+        "optional": [
+          ["number", "answer", "result"],
+          ["because"]
+        ],
+        "minMustGroups": 4
+      },
+      "sp": {
+        "must": [
+          ["multiplica", "multiplicar", "por"],
+          ["fraccion"],
+          ["menor que 1", "<1", "menos de 1"],
+          ["mayor que 1", ">1", "mas de 1"],
+          ["mas pequeno", "menor", "se hace mas pequeno"],
+          ["mas grande", "mayor", "se hace mas grande"]
+        ],
+        "optional": [
+          ["numero", "resultado"],
+          ["porque"]
+        ],
+        "minMustGroups": 4
+      }
+    }
   },
   {
     "id": "4a",
@@ -117,7 +383,39 @@
     "text": "For each 7 below, explain what value the 7 really has.",
     "answerText": "In 273, the 7 is 70. In 47,208, the 7 is 7,000. In 387, the 7 is 7. In 3,702, the 7 is 700. In 5.7, the 7 is 7 tenths. In 6.2307, the 7 is 7 ten-thousandths.",
     "textSp": "Para cada “7” a continuación, explica qué valor tiene el número 7.",
-    "answerTextSp": "En 273, el 7 representa setenta. En 47,208, el 7 representa siete mil. En 387, el 7 representa siete unidades. En 3,702, el 7 representa setecientos. En 5.7, el 7 representa siete décimos. En 6.2307, el 7 representa siete diezmilésimos."
+    "answerTextSp": "En 273, el 7 representa setenta. En 47,208, el 7 representa siete mil. En 387, el 7 representa siete unidades. En 3,702, el 7 representa setecientos. En 5.7, el 7 representa siete décimos. En 6.2307, el 7 representa siete diezmilésimos.",
+    "grade": {
+      "en": {
+        "must": [
+          ["place value", "value", "worth"],
+          ["70"],
+          ["7000", "7,000"],
+          ["7"],
+          ["700"],
+          ["tenths", "0.7", "seven tenths"],
+          ["ten thousandths", "0.0007", "seven ten-thousandths", "ten-thousandths"]
+        ],
+        "optional": [
+          ["in 273", "in 47,208", "in 387", "in 3,702", "in 5.7", "in 6.2307"]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["valor posicional", "valor"],
+          ["70", "setenta"],
+          ["7000", "siete mil"],
+          ["7", "siete"],
+          ["700", "setecientos"],
+          ["decimos", "0.7", "siete decimos"],
+          ["diezmilesimos", "0.0007", "siete diez milesimos", "diez milesimos"]
+        ],
+        "optional": [
+          ["en 273", "en 47 208", "en 387", "en 3 702", "en 5.7", "en 6.2307"]
+        ],
+        "minMustGroups": 3
+      }
+    }
   },
   {
     "id": "4b",
@@ -129,7 +427,32 @@
     "text": "Compare the value of each digit. How many times larger is one value than the other?",
     "answerText": "In 37.42, the 4 is 10 times the 4 in 75.34. In 75.4, the 7 is 1,000 times the 7 in 55.37. In 3.09, the 9 is 1/100 the value of the 9 in 9.23.",
     "textSp": "Compara el valor de cada número. ¿Cuántas veces mayor es uno que el otro?",
-    "answerTextSp": "En 37.42, el 4 es diez veces mayor que el 4 en 75.34. En 75.4, el 7 es mil veces mayor que el 7 en 55.37. En 3.09, el 9 es una centésima parte del valor del 9 en 9.23."
+    "answerTextSp": "En 37.42, el 4 es diez veces mayor que el 4 en 75.34. En 75.4, el 7 es mil veces mayor que el 7 en 55.37. En 3.09, el 9 es una centésima parte del valor del 9 en 9.23.",
+    "grade": {
+      "en": {
+        "must": [
+          ["10", "ten", "ten times"],
+          ["1000", "1,000", "one thousand", "thousand times"],
+          ["1/100", "one hundredth", "0.01", "hundred times smaller"]
+        ],
+        "optional": [
+          ["times larger", "compare", "place value"],
+          ["digit"]
+        ],
+        "minMustGroups": 2
+      },
+      "sp": {
+        "must": [
+          ["10", "diez", "diez veces"],
+          ["1000", "mil", "mil veces"],
+          ["1/100", "centesima", "una centesima", "0.01"]
+        ],
+        "optional": [
+          ["compara", "valor posicional", "veces mayor"]
+        ],
+        "minMustGroups": 2
+      }
+    }
   },
   {
     "id": "5a",
@@ -141,7 +464,39 @@
     "text": "What is a decimal?",
     "answerText": "A decimal is a shortcut way to write a fraction with a denominator of 10, 100, 1,000, and so on.",
     "textSp": "¿Qué es un decimal?",
-    "answerTextSp": "Un decimal es una forma más corta de escribir una fracción con denominadores de diez, cien, mil, y así sucesivamente."
+    "answerTextSp": "Un decimal es una forma más corta de escribir una fracción con denominadores de diez, cien, mil, y así sucesivamente.",
+    "grade": {
+      "en": {
+        "must": [
+          ["decimal", "decimals"],
+          ["fraction"],
+          ["10", "ten"],
+          ["100", "hundred"],
+          ["1000", "thousand"],
+          ["denominator", "bottom"]
+        ],
+        "optional": [
+          ["shortcut", "another way", "a way to write"],
+          ["powers of 10", "ten"]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["decimal", "decimales"],
+          ["fraccion"],
+          ["10", "diez"],
+          ["100", "cien"],
+          ["1000", "mil"],
+          ["denominador"]
+        ],
+        "optional": [
+          ["forma corta", "otra manera", "manera de escribir"],
+          ["potencias de diez"]
+        ],
+        "minMustGroups": 3
+      }
+    }
   },
   {
     "id": "5b",
@@ -153,7 +508,37 @@
     "text": "Explain how you would round these numbers.",
     "answerText": "To round 82.7 to the ones place, look at the tenths digit. Because 7 is more than 5, round the ones place up to 3. To round 8.562 to the hundredths place, look at the thousandths digit. Because 2 is less than 5, cut it off and leave the 6 in the hundreths place.",
     "textSp": "Explica cómo redondearías estos números.",
-    "answerTextSp": "Para redondear 82.7 al lugar de las unidades, observa el número en la posición de los décimos. Para redondear 8.562 al lugar de las centésimas, observa el número en la posición de los milésimos y decide si debes redondear."
+    "answerTextSp": "Para redondear 82.7 al lugar de las unidades, observa el número en la posición de los décimos. Para redondear 8.562 al lugar de las centésimas, observa el número en la posición de los milésimos y decide si debes redondear.",
+    "grade": {
+      "en": {
+        "must": [
+          ["round", "rounding"],
+          ["look at", "check"],
+          ["5", "five"],
+          ["up", "down", "increase", "decrease"],
+          ["ones", "tenths", "hundredths", "thousandths"]
+        ],
+        "optional": [
+          ["82.7", "8.562"],
+          ["digit", "place"]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["redondea", "redondear"],
+          ["mira", "observa", "fijate", "chequea"],
+          ["5", "cinco"],
+          ["sube", "baja", "aumenta", "se queda"],
+          ["unidades", "decimos", "centesimas", "milesimas"]
+        ],
+        "optional": [
+          ["82.7", "8.562"],
+          ["digito", "posicion", "lugar"]
+        ],
+        "minMustGroups": 3
+      }
+    }
   },
   {
     "id": "5c",
@@ -165,7 +550,39 @@
     "text": "List the order of operations. When do you use the order of operation?",
     "answerText": "Parentheses, exponents, multiplication and division from left to right, addition and subtraction from left to right. Use the order of operations when a problem has more than one operation.",
     "textSp": "Enumera el orden de operaciones. ¿Cuándo se usa el orden de operaciones?",
-    "answerTextSp": "Paréntesis. Exponentes. Multiplicación y división de izquierda a derecha. Suma y resta de izquierda a derecha. Se usa el orden de operaciones cuando un problema tiene más de una operación."
+    "answerTextSp": "Paréntesis. Exponentes. Multiplicación y división de izquierda a derecha. Suma y resta de izquierda a derecha. Se usa el orden de operaciones cuando un problema tiene más de una operación.",
+    "grade": {
+      "en": {
+        "must": [
+          ["parentheses", "paren", "brackets"],
+          ["exponents", "powers"],
+          ["multiply", "multiplication", "times", "divide", "division"],
+          ["add", "addition", "plus", "subtract", "subtraction", "minus"],
+          ["left to right", "from left to right"],
+          ["more than one", "multiple", "more than 1"]
+        ],
+        "optional": [
+          ["pemdas", "order of operations"],
+          ["expression", "problem"]
+        ],
+        "minMustGroups": 4
+      },
+      "sp": {
+        "must": [
+          ["parentesis"],
+          ["exponentes", "potencias"],
+          ["multiplicacion", "multiplica", "division", "divide"],
+          ["suma", "sumar", "resta", "restar"],
+          ["izquierda a derecha", "de izquierda a derecha"],
+          ["mas de una", "varias", "multiple"]
+        ],
+        "optional": [
+          ["pemdas", "orden de operaciones"],
+          ["expresion", "problema"]
+        ],
+        "minMustGroups": 4
+      }
+    }
   },
   {
     "id": "6a",
@@ -177,7 +594,35 @@
     "text": "Explain the first step in adding these fractions.",
     "answerText": "Find a common denominator, then rewrite the fractions as equivalent fractions.",
     "textSp": "Explica el primer paso para sumar estas fracciones.",
-    "answerTextSp": "Primero, observa los denominadores. Encuentra un denominador común. Luego escribe fracciones equivalentes usando multiplicación."
+    "answerTextSp": "Primero, observa los denominadores. Encuentra un denominador común. Luego escribe fracciones equivalentes usando multiplicación.",
+    "grade": {
+      "en": {
+        "must": [
+          ["common denominator", "same denominator"],
+          ["find", "get", "make"],
+          ["equivalent", "equal fractions", "same value"],
+          ["rewrite", "renaming", "change them"]
+        ],
+        "optional": [
+          ["multiply", "times"],
+          ["first step", "start"]
+        ],
+        "minMustGroups": 2
+      },
+      "sp": {
+        "must": [
+          ["denominador comun", "mismo denominador"],
+          ["encuentra", "busca", "saca", "haz"],
+          ["equivalentes", "fracciones equivalentes", "mismo valor"],
+          ["reescribe", "cambialas", "renombra"]
+        ],
+        "optional": [
+          ["multiplicacion", "multiplica"],
+          ["primer paso"]
+        ],
+        "minMustGroups": 2
+      }
+    }
   },
   {
     "id": "6b",
@@ -189,7 +634,39 @@
     "text": "Fill in the missing values between normal form and exponential form.",
     "answerText": "10,000 = 10 to the fourth power. 1,000 = 10 to the third power. 1,000,000,000 = 10 to the ninth power.",
     "textSp": "Encuentra el valor que falta entre la forma numérica y la forma exponencial.",
-    "answerTextSp": "Diez mil es igual a diez a la cuarta potencia. Mil es igual a diez a la tercera potencia. Mil millones es igual a diez a la novena potencia."
+    "answerTextSp": "Diez mil es igual a diez a la cuarta potencia. Mil es igual a diez a la tercera potencia. Mil millones es igual a diez a la novena potencia.",
+    "grade": {
+      "en": {
+        "must": [
+          ["10000", "10,000", "ten thousand"],
+          ["10^4", "ten to the fourth", "fourth power"],
+          ["1000", "1,000", "one thousand"],
+          ["10^3", "ten to the third", "third power"],
+          ["1000000000", "1,000,000,000", "one billion", "billion"],
+          ["10^9", "ten to the ninth", "ninth power"]
+        ],
+        "optional": [
+          ["exponent", "power"],
+          ["equals", "="]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["diez mil", "10000", "10 000"],
+          ["10^4", "cuarta potencia", "a la cuarta"],
+          ["mil", "1000", "1 000"],
+          ["10^3", "tercera potencia", "a la tercera"],
+          ["mil millones", "1000000000", "1 000 000 000"],
+          ["10^9", "novena potencia", "a la novena"]
+        ],
+        "optional": [
+          ["exponente", "potencia"],
+          ["igual", "="]
+        ],
+        "minMustGroups": 3
+      }
+    }
   },
   {
     "id": "7a",
@@ -201,7 +678,35 @@
     "text": "Explain how to graph the coordinate (3, 5).",
     "answerText": "Start at (0, 0). Move right 3. Then move up 5. Put a point.",
     "textSp": "Explica cómo puedes graficar el punto tres, cinco.",
-    "answerTextSp": "Comienza en el origen, que es cero, cero. Muévete tres espacios hacia la derecha. Luego muévete cinco espacios hacia arriba. Coloca un punto allí."
+    "answerTextSp": "Comienza en el origen, que es cero, cero. Muévete tres espacios hacia la derecha. Luego muévete cinco espacios hacia arriba. Coloca un punto allí.",
+    "grade": {
+      "en": {
+        "must": [
+          ["(0,0)", "0,0", "origin", "start at zero"],
+          ["right", "x direction"],
+          ["3", "three"],
+          ["up", "y direction"],
+          ["5", "five"]
+        ],
+        "optional": [
+          ["plot", "graph", "point", "dot"]
+        ],
+        "minMustGroups": 4
+      },
+      "sp": {
+        "must": [
+          ["origen", "(0,0)", "0,0", "cero cero"],
+          ["derecha"],
+          ["3", "tres"],
+          ["arriba"],
+          ["5", "cinco"]
+        ],
+        "optional": [
+          ["grafica", "punto", "coloca", "marca"]
+        ],
+        "minMustGroups": 4
+      }
+    }
   },
   {
     "id": "7b",
@@ -213,7 +718,33 @@
     "text": "Label the origin, the x-axis, and the y-axis.",
     "answerText": "The origin is (0, 0). The x-axis is the horizontal line. The y-axis is the vertical line.",
     "textSp": "Etiqueta el origen, el eje x y el eje y.",
-    "answerTextSp": "El origen es el punto donde se cruzan los dos ejes. El eje x es la línea horizontal. El eje y es la línea vertical."
+    "answerTextSp": "El origen es el punto donde se cruzan los dos ejes. El eje x es la línea horizontal. El eje y es la línea vertical.",
+    "grade": {
+      "en": {
+        "must": [
+          ["origin", "(0,0)", "0,0"],
+          ["x-axis", "x axis", "horizontal", "side to side"],
+          ["y-axis", "y axis", "vertical", "up and down"]
+        ],
+        "optional": [
+          ["line", "axis"],
+          ["where they cross", "intersection"]
+        ],
+        "minMustGroups": 2
+      },
+      "sp": {
+        "must": [
+          ["origen"],
+          ["eje x", "horizontal", "de lado a lado"],
+          ["eje y", "vertical", "arriba y abajo"]
+        ],
+        "optional": [
+          ["linea"],
+          ["donde se cruzan", "interseccion"]
+        ],
+        "minMustGroups": 2
+      }
+    }
   },
   {
     "id": "7c",
@@ -225,7 +756,31 @@
     "text": "This shape can be called a square. Why?",
     "answerText": "A square has 4 equal sides and 4 right angles.",
     "textSp": "Esta figura se llama cuadrado. ¿Por qué?",
-    "answerTextSp": "Un cuadrado tiene cuatro lados iguales y cuatro ángulos rectos."
+    "answerTextSp": "Un cuadrado tiene cuatro lados iguales y cuatro ángulos rectos.",
+    "grade": {
+      "en": {
+        "must": [
+          ["4", "four"],
+          ["equal sides", "same sides", "all sides equal", "same length"],
+          ["right angles", "90", "90 degrees", "square corners", "four right angles"]
+        ],
+        "optional": [
+          ["square"]
+        ],
+        "minMustGroups": 2
+      },
+      "sp": {
+        "must": [
+          ["4", "cuatro"],
+          ["lados iguales", "todos los lados iguales", "mismo largo"],
+          ["angulos rectos", "90", "90 grados", "esquinas rectas"]
+        ],
+        "optional": [
+          ["cuadrado"]
+        ],
+        "minMustGroups": 2
+      }
+    }
   },
   {
     "id": "7d",
@@ -237,7 +792,31 @@
     "text": "All of these shapes can be called quadrilaterals. Why?",
     "answerText": "A quadrilateral is any 4-sided shape.",
     "textSp": "Todas estas figuras pueden llamarse cuadriláteros. ¿Por qué?",
-    "answerTextSp": "Cualquier figura de cuatro lados se puede llamar cuadrilátero."
+    "answerTextSp": "Cualquier figura de cuatro lados se puede llamar cuadrilátero.",
+    "grade": {
+      "en": {
+        "must": [
+          ["quadrilateral"],
+          ["4", "four"],
+          ["sides", "side"]
+        ],
+        "optional": [
+          ["shape", "polygon"]
+        ],
+        "minMustGroups": 2
+      },
+      "sp": {
+        "must": [
+          ["cuadrilatero", "cuadrilateros"],
+          ["4", "cuatro"],
+          ["lados", "lado"]
+        ],
+        "optional": [
+          ["figura", "forma", "poligono"]
+        ],
+        "minMustGroups": 2
+      }
+    }
   },
   {
     "id": "7e",
@@ -249,7 +828,35 @@
     "text": "Both of these shapes can be called rhombuses. Why?",
     "answerText": "A rhombus has 4 equal sides and opposite sides are parallel.",
     "textSp": "Ambas figuras pueden llamarse rombos. ¿Por qué?",
-    "answerTextSp": "Un rombo tiene cuatro lados iguales y los lados opuestos son paralelos."
+    "answerTextSp": "Un rombo tiene cuatro lados iguales y los lados opuestos son paralelos.",
+    "grade": {
+      "en": {
+        "must": [
+          ["rhombus", "rhombuses", "diamond"],
+          ["4", "four"],
+          ["equal sides", "same length sides", "all sides equal"],
+          ["opposite", "across from each other"],
+          ["parallel", "never meet", "same direction"]
+        ],
+        "optional": [
+          ["both pairs"]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["rombo", "rombos"],
+          ["4", "cuatro"],
+          ["lados iguales", "todos iguales"],
+          ["opuestos", "enfrente"],
+          ["paralelos", "no se juntan", "misma direccion"]
+        ],
+        "optional": [
+          ["dos pares"]
+        ],
+        "minMustGroups": 3
+      }
+    }
   },
   {
     "id": "7f",
@@ -261,6 +868,34 @@
     "text": "All three of these shapes can be called parallelograms. Why?",
     "answerText": "A parallelogram has 4 sides and both pairs of opposite sides are parallel.",
     "textSp": "Las tres figuras pueden llamarse paralelogramos. ¿Por qué?",
-    "answerTextSp": "Un paralelogramo tiene cuatro lados y los lados opuestos son paralelos."
+    "answerTextSp": "Un paralelogramo tiene cuatro lados y los lados opuestos son paralelos.",
+    "grade": {
+      "en": {
+        "must": [
+          ["parallelogram", "parallelograms"],
+          ["4", "four"],
+          ["sides", "side"],
+          ["opposite sides", "across sides", "both pairs"],
+          ["parallel", "never meet", "same direction"]
+        ],
+        "optional": [
+          ["quadrilateral"]
+        ],
+        "minMustGroups": 3
+      },
+      "sp": {
+        "must": [
+          ["paralelogramo", "paralelogramos"],
+          ["4", "cuatro"],
+          ["lados", "lado"],
+          ["lados opuestos", "dos pares"],
+          ["paralelos", "no se juntan", "misma direccion"]
+        ],
+        "optional": [
+          ["cuadrilatero"]
+        ],
+        "minMustGroups": 3
+      }
+    }
   }
 ]
