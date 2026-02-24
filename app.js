@@ -1346,8 +1346,7 @@ function recordQuizResult(studentName, cardId, level){
   else s.incorrect += 1;
 
   saveProgress(progress);
-}
-/* =====================================================
+}/* =====================================================
    ✅ WIRE EVERYTHING (matches your updated index.html)
    ===================================================== */
 function wireEverything(){
@@ -1355,18 +1354,13 @@ function wireEverything(){
   // ---------- Badge popup ----------
   el("badgePopupCloseBtn")?.addEventListener("click", hideBadgePopup);
   el("badgePopup")?.addEventListener("click", (e) => {
-    if (e.target && e.target.id === "badgePopup") hideBadgePopup(); // click outside closes
+    if (e.target && e.target.id === "badgePopup") hideBadgePopup();
   });
 
-  // ---------- Persistent header / top bar ----------
+  // ---------- Persistent top bar ----------
   el("modeStudent")?.addEventListener("click", () => showView("start"));
   el("modeTeacher")?.addEventListener("click", openTeacherDashboard);
   el("langToggleBtn")?.addEventListener("click", () => setSpanishMode(!spanishMode));
-
-  // Quiz buttons (study + quiz dashboard view)
-  el("quizInStudyBtn")?.addEventListener("click", openQuizMode);
-  el("quizDashBtn")?.addEventListener("click", openQuizDashboard);
-  el("quizDashBackBtn")?.addEventListener("click", () => showView("study"));
 
   // ---------- Start view ----------
   el("startBtn")?.addEventListener("click", start);
@@ -1376,19 +1370,24 @@ function wireEverything(){
   // ---------- Study view ----------
   el("dashInStudyBtn")?.addEventListener("click", openStudentDashboard);
   el("badgesInStudyBtn")?.addEventListener("click", openBadges);
+  el("quizInStudyBtn")?.addEventListener("click", openQuizMode);
+  el("quizDashBtn")?.addEventListener("click", openQuizDashboard);
   el("changeBtn")?.addEventListener("click", goToStart);
 
-  el("checkBtn")?.addEventListener("click", () => { ttsStop(); reveal(); });
+  el("checkBtn")?.addEventListener("click", () => { ttsStop?.(); reveal(); });
   el("skipBtn")?.addEventListener("click", () => advance("skip"));
   el("rateGot")?.addEventListener("click", () => advance("got"));
   el("rateClose")?.addEventListener("click", () => advance("close"));
   el("rateMiss")?.addEventListener("click", () => advance("miss"));
 
-  // ---------- Badges view ----------
-  el("badgesBackBtn")?.addEventListener("click", goToStart);
-
   // ---------- Student dashboard ----------
   el("dashBackBtn")?.addEventListener("click", goToStart);
+
+  // ---------- Quiz dashboard ----------
+  el("quizDashBackBtn")?.addEventListener("click", () => showView("study"));
+
+  // ---------- Badges view ----------
+  el("badgesBackBtn")?.addEventListener("click", goToStart);
 
   // ---------- Teacher dashboard ----------
   el("studentSelect")?.addEventListener("change", () => {
