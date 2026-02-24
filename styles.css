@@ -238,3 +238,21 @@ th{background:#f7f9fc}
   transform: translateX(20px);
 }
 .hidden { display: none !important; }
+
+#badgePopup{
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+}
+.badgePopupCard{
+  width: min(520px, 92vw);
+  background: white;
+  border-radius: 16px;
+  padding: 18px 18px 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  text-align: center;
+}
