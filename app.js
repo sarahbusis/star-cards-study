@@ -32,19 +32,38 @@ function el(id){
 
 /* ---------- Views ---------- */
 function showView(which){
-  el("startView")?.classList.toggle("hidden", which !== "start");
-  el("studyView")?.classList.toggle("hidden", which !== "study");
-  el("studentDashView")?.classList.toggle("hidden", which !== "studentDash");
-   function showView(which){
-  el("startView")?.classList.toggle("hidden", which !== "start");
-  el("studyView")?.classList.toggle("hidden", which !== "study");
-  el("studentDashView")?.classList.toggle("hidden", which !== "studentDash");
-  el("badgesView")?.classList.toggle("hidden", which !== "badges");   // <-- add this
-  el("teacherView")?.classList.toggle("hidden", which !== "teacher");
-}
-  el("teacherView")?.classList.toggle("hidden", which !== "teacher");
-}
+  const views = ["startView", "studyView", "studentDashView", "badgesView", "teacherView"];
 
+  // Hide all
+  for (const id of views){
+    const v = el(id);
+    if (v) v.classList.add("hidden");
+  }
+
+  // Show exactly one
+  const map = {
+    start: "startView",
+    study: "studyView",
+    studentDash: "studentDashView",
+    badges: "badgesView",
+    teacher: "teacherView",
+  };
+
+  const targetId = map[which];
+  const target = targetId ? el(targetId) : null;
+
+  if (target){
+    target.classList.remove("hidden");
+  } else {
+    console.warn("[showView] unknown view:", which, "showing startView instead");
+    el("startView")?.classList.remove("hidden");
+  }
+
+  console.log("[showView]", which, "=>", targetId,
+    "badgesHidden?", el("badgesView")?.classList.contains("hidden"),
+    "startHidden?", el("startView")?.classList.contains("hidden")
+  );
+}
 /* ---------- Language toggle ---------- */
 function setSpanishMode(on){
   spanishMode = !!on;
