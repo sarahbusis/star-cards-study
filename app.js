@@ -104,7 +104,40 @@ function recordQuizResult(studentName, cardId, level){
 
   saveProgress(progress);
 }
+// ===============================
+// DASHBOARD TOGGLE (ratings vs quiz)
+// ===============================
+window.dashboardMode = window.dashboardMode ?? "ratings"; // "ratings" | "quiz"
 
+function setDashboardMode(mode){
+  window.dashboardMode = (mode === "quiz") ? "quiz" : "ratings";
+
+  const isQuiz = (window.dashboardMode === "quiz");
+
+  // Sync BOTH toggles if present
+  const t1 = el("dashToggle");
+  if (t1) t1.checked = isQuiz;
+
+  const t2 = el("quizDashToggle");
+  if (t2) t2.checked = isQuiz;
+
+  // Switch views
+  showView(isQuiz ? "quizDash" : "studentDash");
+
+  // Re-render the view we’re showing
+  try {
+    if (isQuiz) renderQuizDashboard();
+    else renderStudentDashboard();
+  } catch (e){
+    console.warn("[dashboard] render error:", e);
+  }
+}
+
+async function openDashboardDefault(){
+  // Ensure we load student + backend data the same way as before
+  await openStudentDashboard();
+  setDashboardMode("ratings");
+}
 // --- Quiz dashboard view ---
 function openQuizDashboard(){
   let name = (currentStudent || "").trim();
@@ -1619,7 +1652,7 @@ function setQuizFeedback(level, message){
   box.classList.remove("hidden");
 }
    
-}/* =====================================================
+/* =====================================================
    ✅ WIRE EVERYTHING (matches your updated index.html)
    ===================================================== */
 function wireEverything(){
@@ -1637,47 +1670,60 @@ function wireEverything(){
 
   // ---------- Start view ----------
   el("startBtn")?.addEventListener("click", start);
-  el("studentDashBtn")?.addEventListener("click", openStudentDashboard);
+
+  // Dashboard button (ONE behavior everywhere: open "My ratings" by default)
+  el("studentDashBtn")?.addEventListener("click", openDashboardDefault);
+
   el("badgesBtn")?.addEventListener("click", openBadges);
 
-// ---------- Study view ----------
-el("dashInStudyBtn")?.addEventListener("click", openStudentDashboard);
-el("badgesInStudyBtn")?.addEventListener("click", openBadges);
+  // ---------- Study view ----------
+  el("dashInStudyBtn")?.addEventListener("click", openDashboardDefault);
+  el("badgesInStudyBtn")?.addEventListener("click", openBadges);
 
-// Home button (replaces Change units)
-el("homeBtn")?.addEventListener("click", goToStart);
+  // Home button (replaces Change units)
+  el("homeBtn")?.addEventListener("click", goToStart);
 
-// Quiz mode toggle switch (replaces Quiz button)
-el("quizModeToggle")?.addEventListener("change", (e) => {
-  setQuizMode(!!e.target.checked);
-});
+  // Quiz mode toggle switch (replaces Quiz button)
+  el("quizModeToggle")?.addEventListener("change", (e) => {
+    setQuizMode(!!e.target.checked);
+  });
 
-// Check / Skip / Next
-el("checkBtn")?.addEventListener("click", () => { ttsStop?.(); reveal(); });
-el("skipBtn")?.addEventListener("click", () => advance("skip"));
+  // Check / Skip / Next
+  el("checkBtn")?.addEventListener("click", () => { ttsStop?.(); reveal(); });
+  el("skipBtn")?.addEventListener("click", () => advance("skip"));
 
-el("nextBtn")?.addEventListener("click", () => {
-  // After a quiz check, Next advances to the next card
-  el("quizFeedback")?.classList.add("hidden");
+  el("nextBtn")?.addEventListener("click", () => {
+    // After a quiz check, Next advances to the next card
+    el("quizFeedback")?.classList.add("hidden");
 
-  // restore buttons for the next card
-  el("nextBtn")?.classList.add("hidden");
-  el("checkBtn")?.classList.remove("hidden");
-  el("skipBtn")?.classList.remove("hidden");
+    // restore buttons for the next card
+    el("nextBtn")?.classList.add("hidden");
+    el("checkBtn")?.classList.remove("hidden");
+    el("skipBtn")?.classList.remove("hidden");
 
-  // advance without self-rating (treated like skip)
-  advance("skip");
-});
+    // advance without self-rating (treated like skip)
+    advance("skip");
+  });
 
-// Self-rating buttons (Study mode only; in Quiz mode the UI is hidden by reveal())
-el("rateGot")?.addEventListener("click", () => advance("got"));
-el("rateClose")?.addEventListener("click", () => advance("close"));
-el("rateMiss")?.addEventListener("click", () => advance("miss"));
+  // Self-rating buttons (Study mode only; in Quiz mode the UI is hidden by reveal())
+  el("rateGot")?.addEventListener("click", () => advance("got"));
+  el("rateClose")?.addEventListener("click", () => advance("close"));
+  el("rateMiss")?.addEventListener("click", () => advance("miss"));
+
+  // ---------- Dashboard toggles (My ratings <-> Quiz scores) ----------
+  el("dashToggle")?.addEventListener("change", (e) => {
+    setDashboardMode(e.target.checked ? "quiz" : "ratings");
+  });
+
+  el("quizDashToggle")?.addEventListener("change", (e) => {
+    setDashboardMode(e.target.checked ? "quiz" : "ratings");
+  });
+
   // ---------- Student dashboard ----------
   el("dashBackBtn")?.addEventListener("click", goToStart);
 
   // ---------- Quiz dashboard ----------
-  el("quizDashBackBtn")?.addEventListener("click", () => showView("study"));
+  el("quizDashBackBtn")?.addEventListener("click", goToStart);
 
   // ---------- Badges view ----------
   el("badgesBackBtn")?.addEventListener("click", goToStart);
