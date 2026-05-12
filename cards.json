@@ -507,41 +507,34 @@
     "a": "assets/5bA.png",
     "qsp": "assets/5bQsp.png",
     "asp": "assets/5bAsp.png",
-    "text": "Explain how you would round these numbers.",
-    "answerText": "To round 82.7 to the ones place, look at the tenths digit. Because 7 is more than 5, round the ones place up to 3. To round 8.562 to the hundredths place, look at the thousandths digit. Because 2 is less than 5, cut it off and leave the 6 in the hundreths place.",
+    "text": "Explain how you would round a number to the hundreths place.",
+    "answerText": "Look next door. Five or more, up the score, four or less, let it rest.",
     "textSp": "Explica cómo redondearías estos números.",
     "answerTextSp": "Para redondear 82.7 al lugar de las unidades, observa el número en la posición de los décimos. Para redondear 8.562 al lugar de las centésimas, observa el número en la posición de los milésimos y decide si debes redondear.",
-    "grade": {
-      "en": {
-        "must": [
-          ["round", "rounding"],
-          ["look at", "check"],
-          ["5", "five"],
-          ["up", "down", "increase", "decrease"],
-          ["ones", "tenths", "hundredths", "thousandths"]
-        ],
-        "optional": [
-          ["82.7", "8.562"],
-          ["digit", "place"]
-        ],
-        "minMustGroups": 3
-      },
-      "sp": {
-        "must": [
-          ["redondea", "redondear"],
-          ["mira", "observa", "fijate", "chequea"],
-          ["5", "cinco"],
-          ["sube", "baja", "aumenta", "se queda"],
-          ["unidades", "decimos", "centesimas", "milesimas"]
-        ],
-        "optional": [
-          ["82.7", "8.562"],
-          ["digito", "posicion", "lugar"]
-        ],
-        "minMustGroups": 3
-      }
-    }
+   "grade": {
+  "en": {
+    "ordered": true,
+    "must": [
+      ["look next door", "check next door", "look at the next digit"],
+      ["five or more", "5 or more"],
+      ["up the score", "round up", "raise the score"],
+      ["four or less", "4 or less"],
+      ["let it rest", "keep it the same", "stay the same"]
+    ],
+    "minMustGroups": 5
   },
+  "sp": {
+    "ordered": true,
+    "must": [
+      ["mira al lado", "mira el numero al lado"],
+      ["cinco o mas", "5 o mas"],
+      ["sube", "redondea hacia arriba"],
+      ["cuatro o menos", "4 o menos"],
+      ["dejalo igual", "queda igual"]
+    ],
+    "minMustGroups": 5
+  }
+},
   {
     "id": "5c",
     "unit": 5,
