@@ -56,7 +56,7 @@ let cardStartTs = null;
 /* =====================================================
    QUIZ MODE STATE (global + toggle in study topbar)
    ===================================================== */
-window.quizMode = window.quizMode ?? false;
+window.quizMode = true;
 
 function setQuizMode(on){
   window.quizMode = !!on;
