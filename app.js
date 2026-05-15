@@ -167,7 +167,7 @@ function setDashboardMode(mode){
 
 async function openDashboardDefault(){
   await openStudentDashboard();
-  setDashboardMode("ratings");
+  setDashboardMode("quiz");
 }
 
 /* =====================================================
@@ -1617,9 +1617,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     buildUnitUI();
     
     wireSegToggle();
-    wireEverything();
-     
-    showView("start");
+  wireEverything();
+
+setQuizMode(true);
+setDashboardMode("quiz");
+
+showView("start");
 
     console.log("[init] ready");
   } catch (e){
