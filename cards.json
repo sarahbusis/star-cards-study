@@ -522,7 +522,7 @@
       ["let it rest", "keep it the same", "stay the same"]
     ],
     "minMustGroups": 5
-  },
+  }
   "sp": {
     "ordered": true,
     "must": [
