@@ -524,19 +524,20 @@
     "minMustGroups": 5
   }
   "sp": {
-    "ordered": true,
-    "must": [
-      ["mira al lado", "mira el numero al lado"],
-      ["cinco o mas", "5 o mas"],
-      ["sube", "redondea hacia arriba"],
-      ["cuatro o menos", "4 o menos"],
-      ["dejalo igual", "queda igual"]
-    ],
-    "minMustGroups": 5
-  }
+  "ordered": true,
+  "must": [
+    ["mira al lado", "mira el numero al lado"],
+    ["cinco o mas", "5 o mas"],
+    ["sube", "redondea hacia arriba"],
+    ["cuatro o menos", "4 o menos"],
+    ["dejalo igual", "queda igual"]
+  ],
+  "minMustGroups": 5
+}
+}
 },
-  {
-    "id": "5c",
+{
+  "id": "5c",
     "unit": 5,
     "q": "assets/5cQ.png",
     "a": "assets/5cA.png",
